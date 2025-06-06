@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1749231708048,
+  "lastUpdate": 1749233343194,
   "repoUrl": "https://github.com/dzoep/qi",
   "entries": {
     "Qi Benchmarks": [
@@ -39260,6 +39260,425 @@ window.BENCHMARK_DATA = {
           {
             "name": "(require qi)",
             "value": 151,
+            "unit": "ms"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dominik.pantucek@trustica.cz",
+            "name": "Dominik Pantůček",
+            "username": "dzoep"
+          },
+          "committer": {
+            "email": "dominik.pantucek@trustica.cz",
+            "name": "Dominik Pantůček",
+            "username": "dzoep"
+          },
+          "distinct": true,
+          "id": "1eb98b507d8a815f6cd5e7d3ee0e93a06c4ff9f7",
+          "message": "Fix deforestation patterns after change to qi/list.\n\n- remove fst-syntax0 representing only some transformers in the head position\n- ensure all deforested sequences contain at least two elements after this removal\n- change the test to check that map in the head position can be deforested now",
+          "timestamp": "2025-06-06T20:00:37+02:00",
+          "tree_id": "888f099a509f1c47bd98a494a3e6290b36a4ecbd",
+          "url": "https://github.com/dzoep/qi/commit/1eb98b507d8a815f6cd5e7d3ee0e93a06c4ff9f7"
+        },
+        "date": 1749233342068,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "AND",
+            "value": 27,
+            "unit": "ms"
+          },
+          {
+            "name": "NAND",
+            "value": 52,
+            "unit": "ms"
+          },
+          {
+            "name": "NOR",
+            "value": 38,
+            "unit": "ms"
+          },
+          {
+            "name": "NOT",
+            "value": 2,
+            "unit": "ms"
+          },
+          {
+            "name": "OR",
+            "value": 22,
+            "unit": "ms"
+          },
+          {
+            "name": "XNOR",
+            "value": 45,
+            "unit": "ms"
+          },
+          {
+            "name": "XOR",
+            "value": 73,
+            "unit": "ms"
+          },
+          {
+            "name": "all",
+            "value": 94,
+            "unit": "ms"
+          },
+          {
+            "name": "all?",
+            "value": 24,
+            "unit": "ms"
+          },
+          {
+            "name": "amp",
+            "value": 190,
+            "unit": "ms"
+          },
+          {
+            "name": "and",
+            "value": 15,
+            "unit": "ms"
+          },
+          {
+            "name": "and%",
+            "value": 130,
+            "unit": "ms"
+          },
+          {
+            "name": "any",
+            "value": 94,
+            "unit": "ms"
+          },
+          {
+            "name": "any?",
+            "value": 22,
+            "unit": "ms"
+          },
+          {
+            "name": "apply",
+            "value": 89,
+            "unit": "ms"
+          },
+          {
+            "name": "block",
+            "value": 9,
+            "unit": "ms"
+          },
+          {
+            "name": "bundle",
+            "value": 19,
+            "unit": "ms"
+          },
+          {
+            "name": "catchall-template",
+            "value": 99,
+            "unit": "ms"
+          },
+          {
+            "name": "clos",
+            "value": 101,
+            "unit": "ms"
+          },
+          {
+            "name": "collect",
+            "value": 79,
+            "unit": "ms"
+          },
+          {
+            "name": "count",
+            "value": 82,
+            "unit": "ms"
+          },
+          {
+            "name": "crossover",
+            "value": 77,
+            "unit": "ms"
+          },
+          {
+            "name": "currying",
+            "value": 89,
+            "unit": "ms"
+          },
+          {
+            "name": "effect",
+            "value": 53,
+            "unit": "ms"
+          },
+          {
+            "name": "esc",
+            "value": 78,
+            "unit": "ms"
+          },
+          {
+            "name": "fanout",
+            "value": 193,
+            "unit": "ms"
+          },
+          {
+            "name": "feedback",
+            "value": 118,
+            "unit": "ms"
+          },
+          {
+            "name": "foldl",
+            "value": 95,
+            "unit": "ms"
+          },
+          {
+            "name": "foldr",
+            "value": 115,
+            "unit": "ms"
+          },
+          {
+            "name": "gate",
+            "value": 76,
+            "unit": "ms"
+          },
+          {
+            "name": "gen",
+            "value": 70,
+            "unit": "ms"
+          },
+          {
+            "name": "ground",
+            "value": 19,
+            "unit": "ms"
+          },
+          {
+            "name": "group",
+            "value": 138,
+            "unit": "ms"
+          },
+          {
+            "name": "if",
+            "value": 78,
+            "unit": "ms"
+          },
+          {
+            "name": "input aliases",
+            "value": 39,
+            "unit": "ms"
+          },
+          {
+            "name": "inverter",
+            "value": 130,
+            "unit": "ms"
+          },
+          {
+            "name": "live?",
+            "value": 38,
+            "unit": "ms"
+          },
+          {
+            "name": "loop",
+            "value": 150,
+            "unit": "ms"
+          },
+          {
+            "name": "loop2",
+            "value": 1277,
+            "unit": "ms"
+          },
+          {
+            "name": "none",
+            "value": 139,
+            "unit": "ms"
+          },
+          {
+            "name": "none?",
+            "value": 27,
+            "unit": "ms"
+          },
+          {
+            "name": "not",
+            "value": 8,
+            "unit": "ms"
+          },
+          {
+            "name": "one-of?",
+            "value": 41,
+            "unit": "ms"
+          },
+          {
+            "name": "or",
+            "value": 16,
+            "unit": "ms"
+          },
+          {
+            "name": "or%",
+            "value": 130,
+            "unit": "ms"
+          },
+          {
+            "name": "partition",
+            "value": 198,
+            "unit": "ms"
+          },
+          {
+            "name": "pass",
+            "value": 50,
+            "unit": "ms"
+          },
+          {
+            "name": "rectify",
+            "value": 63,
+            "unit": "ms"
+          },
+          {
+            "name": "relay",
+            "value": 144,
+            "unit": "ms"
+          },
+          {
+            "name": "relay*",
+            "value": 54,
+            "unit": "ms"
+          },
+          {
+            "name": "select",
+            "value": 5,
+            "unit": "ms"
+          },
+          {
+            "name": "sep",
+            "value": 64,
+            "unit": "ms"
+          },
+          {
+            "name": "sieve",
+            "value": 81,
+            "unit": "ms"
+          },
+          {
+            "name": "switch",
+            "value": 114,
+            "unit": "ms"
+          },
+          {
+            "name": "tee",
+            "value": 20,
+            "unit": "ms"
+          },
+          {
+            "name": "template",
+            "value": 17,
+            "unit": "ms"
+          },
+          {
+            "name": "thread",
+            "value": 193,
+            "unit": "ms"
+          },
+          {
+            "name": "thread-right",
+            "value": 122,
+            "unit": "ms"
+          },
+          {
+            "name": "try",
+            "value": 80,
+            "unit": "ms"
+          },
+          {
+            "name": "unless",
+            "value": 77,
+            "unit": "ms"
+          },
+          {
+            "name": "when",
+            "value": 72,
+            "unit": "ms"
+          },
+          {
+            "name": "conditionals",
+            "value": 159,
+            "unit": "ms"
+          },
+          {
+            "name": "composition",
+            "value": 5,
+            "unit": "ms"
+          },
+          {
+            "name": "root-mean-square",
+            "value": 735,
+            "unit": "ms"
+          },
+          {
+            "name": "range-map-car",
+            "value": 173,
+            "unit": "ms"
+          },
+          {
+            "name": "filter-map",
+            "value": 107,
+            "unit": "ms"
+          },
+          {
+            "name": "filter-map (large list)",
+            "value": 260,
+            "unit": "ms"
+          },
+          {
+            "name": "filter-map-foldr",
+            "value": 234,
+            "unit": "ms"
+          },
+          {
+            "name": "filter-map-foldl",
+            "value": 166,
+            "unit": "ms"
+          },
+          {
+            "name": "long-functional-pipeline",
+            "value": 1653,
+            "unit": "ms"
+          },
+          {
+            "name": "range-map-sum",
+            "value": 78,
+            "unit": "ms"
+          },
+          {
+            "name": "filter-map-values",
+            "value": 263,
+            "unit": "ms"
+          },
+          {
+            "name": "double-list",
+            "value": 471,
+            "unit": "ms"
+          },
+          {
+            "name": "double-values",
+            "value": 415,
+            "unit": "ms"
+          },
+          {
+            "name": "factorial",
+            "value": 191,
+            "unit": "ms"
+          },
+          {
+            "name": "pingala",
+            "value": 217,
+            "unit": "ms"
+          },
+          {
+            "name": "eratosthenes",
+            "value": 84,
+            "unit": "ms"
+          },
+          {
+            "name": "collatz",
+            "value": 56,
+            "unit": "ms"
+          },
+          {
+            "name": "(require qi)",
+            "value": 150,
             "unit": "ms"
           }
         ]
