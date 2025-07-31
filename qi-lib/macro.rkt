@@ -10,7 +10,8 @@
 (require (for-syntax racket/base
                      racket/format
                      racket/match
-                     racket/list)
+                     racket/list
+                     racket/syntax)
          (only-in "flow/extended/expander.rkt"
                   qi-macro
                   esc
@@ -19,7 +20,8 @@
          (for-syntax qi/flow/aux-syntax)
          syntax/parse/define
          syntax/parse
-         syntax-spec-v2)
+         syntax-spec-v2
+         racket/performance-hint)
 
 (begin-for-syntax
 
@@ -155,7 +157,30 @@
          ;; capture the codegen in an instance of
          ;; the compile time struct
          (define-syntax info
-           (deforestable-info codegen-f))
+           (deforestable-info codegen-f #'f))
+
+         (define-dsl-syntax name qi-macro
+           (op-transformer #'name #'info #'(op spec ...))))]
+    [(_ (name spec ...+) codegen (lambda (rarg ...) rbody ...))
+     #:with ([_typ arg] ...) #'(spec ...)
+     #:with codegen-f #'(lambda (arg ...)
+                          ;; var bindings vs pattern bindings
+                          ;; arg are syntax objects but we can't
+                          ;; use them as variable bindings, so
+                          ;; we use with-syntax to handle them
+                          ;; as pattern bindings
+                          (with-syntax ([arg arg] ...)
+                            codegen))
+     #:with runtime-cstream-next (format-id this-syntax "~a-cstream-next" #'name)
+     #'(begin
+
+         (define-inline (runtime-cstream-next rarg ...)
+           rbody ...)
+
+         ;; capture the codegen in an instance of
+         ;; the compile time struct
+         (define-syntax info
+           (deforestable-info codegen-f #'runtime-cstream-next))
 
          (define-dsl-syntax name qi-macro
            (op-transformer #'name #'info #'(op spec ...))))]
@@ -166,7 +191,7 @@
          ;; capture the codegen in an instance of
          ;; the compile time struct
          (define-syntax info
-           (deforestable-info codegen-f))
+           (deforestable-info codegen-f #'f))
 
          (define-dsl-syntax name qi-macro
            (op-transformer #'name #'info #'op)))]))

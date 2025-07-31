@@ -9,7 +9,8 @@
                      syntax/srcloc
                      racket/syntax-srcloc
                      "fusion.rkt"
-                     "../../private/form-property.rkt")
+                     "../../private/form-property.rkt"
+                     "../../../../flow/aux-syntax.rkt")
          "templates.rkt"
          racket/performance-hint
          racket/match
@@ -164,7 +165,7 @@
              #:attr state #'())
     (pattern map:fst-map
              #:attr f #'(map.f)
-             #:attr next #'map-cstream-next
+             #:attr next (deforestable-info-runtime (syntax-local-value #'map.info))
              #:attr state #'())
     (pattern filter-map:fst-filter-map
              #:attr f #'(filter-map.f)
@@ -267,13 +268,6 @@
       [rest (void)]))
 
   ;; Transformers
-
-  (define-inline (map-cstream-next f next ctx src)
-    (λ (done skip yield)
-      (next done
-            skip
-            (λ (value state)
-              (yield (f value) state)))))
 
   (define-inline (filter-cstream-next f next ctx src)
     (λ (done skip yield)

@@ -420,7 +420,7 @@ already handled during expansion by Syntax Spec.
       #:datum-literals (#%deforestable)
       [(#%deforestable _name info c ...)
        (let ([es^ (map deforestable-clause-parser (attribute c))])
-         (match-let ([(deforestable-info codegen) (syntax-local-value #'info)])
+         (match-let ([(deforestable-info codegen runtime) (syntax-local-value #'info)])
            (apply codegen es^)))]))
 
   (define (blanket-template-form-parser stx)

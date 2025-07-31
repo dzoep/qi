@@ -82,11 +82,12 @@
     #:attr f (run-passes #'f-uncompiled)))
 
 (define-syntax-class fst-map
-  #:attributes (f)
+  #:attributes (f info)
   #:literal-sets (fs-literals)
   #:datum-literals (map)
   (pattern (#%deforestable map _info ((~datum floe) f-uncompiled))
-    #:attr f (run-passes #'f-uncompiled)))
+           #:attr f (run-passes #'f-uncompiled)
+           #:attr info #'_info))
 
 (define-syntax-class fst-filter-map
   #:attributes (f)
