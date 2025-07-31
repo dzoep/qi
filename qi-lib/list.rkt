@@ -18,7 +18,13 @@
 
 (define-deforestable (map [floe f])
   #'(lambda (vs)  ; single list arg
-      (r:map f vs)))
+      (r:map f vs))
+  (lambda (f next ctx src)
+    (λ (done skip yield)
+      (next done
+            skip
+            (λ (value state)
+              (yield (f value) state))))))
 
 (define-deforestable (filter [floe f])
   #'(λ (vs)
