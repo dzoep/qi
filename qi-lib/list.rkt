@@ -14,7 +14,10 @@
                   define-qi-alias)
          "macro.rkt"
          (prefix-in r: racket/base)
-         (prefix-in r: racket/list))
+         (prefix-in r: racket/list)
+         racket/contract/base)
+
+;; Transformers
 
 (define-deforestable (map [floe f])
   #'(lambda (vs)  ; single list arg
@@ -28,11 +31,54 @@
 
 (define-deforestable (filter [floe f])
   #'(λ (vs)
-      (r:filter f vs)))
+      (r:filter f vs))
+  (lambda (f next ctx src)
+    (λ (done skip yield)
+      (next done
+            skip
+            (λ (value state)
+              (if (f value)
+                  (yield value state)
+                  (skip state)))))))
 
 (define-deforestable (filter-map [floe f])
   #'(λ (vs)
-      (r:filter-map f vs)))
+      (r:filter-map f vs))
+  (lambda (f next ctx src)
+    (λ (done skip yield)
+      (next done
+            skip
+            (λ (value state)
+              (let ([fv (f value)])
+                (if fv
+                    (yield fv state)
+                    (skip state))))))))
+
+(define-deforestable (take [expr n])
+  #'(λ (vs)
+      (r:take vs n))
+  (lambda (next ctx src)
+    (λ (done skip yield)
+      (λ (take-state)
+        (define n (car take-state))
+        (define state (cdr take-state))
+        (if (zero? n)
+            (done)
+            ((next (λ ()
+                     ((contract (-> pair? any)
+                                (λ (v) v)
+                                'take ctx
+                                #f
+                                src)
+                      '()))
+                   (λ (state)
+                     (skip (cons n state)))
+                   (λ (value state)
+                     (define new-state (cons (sub1 n) state))
+                     (yield value new-state)))
+             state))))))
+
+;;
 
 (define-deforestable (foldl [floe f] [expr init])
   #'(λ (vs)
@@ -63,10 +109,6 @@
   [_:id (report-syntax-error this-syntax
           "(range arg ...)"
           "range expects at least one argument")])
-
-(define-deforestable (take [expr n])
-  #'(λ (vs)
-      (r:take vs n)))
 
 (define-deforestable car
   #'r:car)
