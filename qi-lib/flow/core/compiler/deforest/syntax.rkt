@@ -75,11 +75,12 @@
 ;; All are prefixed with fst- for clarity.
 
 (define-syntax-class fst-filter
-  #:attributes (f)
+  #:attributes (f info)
   #:literal-sets (fs-literals)
   #:datum-literals (filter)
   (pattern (#%deforestable filter _info ((~datum floe) f-uncompiled))
-    #:attr f (run-passes #'f-uncompiled)))
+           #:attr f (run-passes #'f-uncompiled)
+           #:attr info #'_info))
 
 (define-syntax-class fst-map
   #:attributes (f info)
@@ -90,17 +91,19 @@
            #:attr info #'_info))
 
 (define-syntax-class fst-filter-map
-  #:attributes (f)
+  #:attributes (f info)
   #:literal-sets (fs-literals)
   #:datum-literals (filter-map)
   (pattern (#%deforestable filter-map _info ((~datum floe) f-uncompiled))
-    #:attr f (run-passes #'f-uncompiled)))
+           #:attr f (run-passes #'f-uncompiled)
+           #:attr info #'_info))
 
 (define-syntax-class fst-take
-  #:attributes (n)
+  #:attributes (n info)
   #:literal-sets (fs-literals)
   #:datum-literals (take)
-  (pattern (#%deforestable take _info ((~datum expr) n))))
+  (pattern (#%deforestable take _info ((~datum expr) n))
+           #:attr info #'_info))
 
 (define-syntax-class fst-syntax
   (pattern (~or _:fst-filter

@@ -161,7 +161,7 @@
     #:attributes (next f state)
     (pattern filter:fst-filter
              #:attr f #'(filter.f)
-             #:attr next #'filter-cstream-next
+             #:attr next (deforestable-info-runtime (syntax-local-value #'filter.info))
              #:attr state #'())
     (pattern map:fst-map
              #:attr f #'(map.f)
@@ -169,11 +169,11 @@
              #:attr state #'())
     (pattern filter-map:fst-filter-map
              #:attr f #'(filter-map.f)
-             #:attr next #'filter-map-cstream-next
+             #:attr next (deforestable-info-runtime (syntax-local-value #'filter-map.info))
              #:attr state #'())
     (pattern take:fst-take
              #:attr f #'()
-             #:attr next #'take-cstream-next
+             #:attr next (deforestable-info-runtime (syntax-local-value #'take.info))
              #:attr state #'(take.n))
     )
 
@@ -268,46 +268,6 @@
       [rest (void)]))
 
   ;; Transformers
-
-  (define-inline (filter-cstream-next f next ctx src)
-    (λ (done skip yield)
-      (next done
-            skip
-            (λ (value state)
-              (if (f value)
-                  (yield value state)
-                  (skip state))))))
-
-  (define-inline (filter-map-cstream-next f next ctx src)
-    (λ (done skip yield)
-      (next done
-            skip
-            (λ (value state)
-              (let ([fv (f value)])
-                (if fv
-                    (yield fv state)
-                    (skip state)))))))
-
-  (define-inline (take-cstream-next next ctx src)
-    (λ (done skip yield)
-      (λ (take-state)
-        (define n (car take-state))
-        (define state (cdr take-state))
-        (if (zero? n)
-            (done)
-            ((next (λ ()
-                     ((contract (-> pair? any)
-                                (λ (v) v)
-                                'take ctx
-                                #f
-                                src)
-                      '()))
-                   (λ (state)
-                     (skip (cons n state)))
-                   (λ (value state)
-                     (define new-state (cons (sub1 n) state))
-                     (yield value new-state)))
-             state)))))
 
   ;; Consumers
 
