@@ -1,16 +1,13 @@
 #lang racket/base
 
-(provide fsp-syntax
-         fst-syntax
+(provide fst-new
+
+         fsp-syntax
          fsc-syntax
 
          fsp-range
          fsp-default
 
-         fst-filter
-         fst-map
-         fst-filter-map
-         fst-take
 
          fsc-foldr
          fsc-foldl
@@ -24,6 +21,7 @@
 (require syntax/parse
          "../../passes.rkt"
          "../../strategy.rkt"
+         "../../../aux-syntax.rkt"
          (for-template racket/base
                        "../../passes.rkt"
                        "../../strategy.rkt"
@@ -69,47 +67,35 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Fusable Stream Transformers
 ;;
-;; Syntax classes matching functions acting as transformers of the
-;; sequence of values passing through.
+;; Syntax class matching all transformers defined by
+;; (define-deforestable #:transformer ...)
 ;;
-;; All are prefixed with fst- for clarity.
+;; It provides the `next`, `f`, and `state` attributes as needed by
+;; the deforest pass (see cps.rkt).
+;;
+;; It also allows `make-deforest-rewrire` to match it directly.
+;;
 
-(define-syntax-class fst-filter
-  #:attributes (f info)
+(define-syntax-class fst-new
+  #:attributes (next f state)
   #:literal-sets (fs-literals)
-  #:datum-literals (filter)
-  (pattern (#%deforestable filter _info ((~datum floe) f-uncompiled))
-           #:attr f (run-passes #'f-uncompiled)
-           #:attr info #'_info))
-
-(define-syntax-class fst-map
-  #:attributes (f info)
-  #:literal-sets (fs-literals)
-  #:datum-literals (map)
-  (pattern (#%deforestable map _info ((~datum floe) f-uncompiled))
-           #:attr f (run-passes #'f-uncompiled)
-           #:attr info #'_info))
-
-(define-syntax-class fst-filter-map
-  #:attributes (f info)
-  #:literal-sets (fs-literals)
-  #:datum-literals (filter-map)
-  (pattern (#%deforestable filter-map _info ((~datum floe) f-uncompiled))
-           #:attr f (run-passes #'f-uncompiled)
-           #:attr info #'_info))
-
-(define-syntax-class fst-take
-  #:attributes (n info)
-  #:literal-sets (fs-literals)
-  #:datum-literals (take)
-  (pattern (#%deforestable take _info ((~datum expr) n))
-           #:attr info #'_info))
-
-(define-syntax-class fst-syntax
-  (pattern (~or _:fst-filter
-                _:fst-map
-                _:fst-filter-map
-                _:fst-take)))
+  (pattern (#%deforestable name _info ((~datum floe) f-uncompiled))
+           #:do ((define is (syntax-local-value #'_info)))
+           #:when (and (deforestable-info? is)
+                       (eq? (deforestable-info-kind is) 'T))
+           #:attr next (deforestable-info-runtime is)
+           #:attr state #'()
+           #:attr f #`(#,(run-passes #'f-uncompiled))
+           )
+  (pattern (#%deforestable name _info ((~datum expr) n))
+           #:do ((define is (syntax-local-value #'_info)))
+           #:when (and (deforestable-info? is)
+                       (eq? (deforestable-info-kind is) 'T))
+           #:attr next (deforestable-info-runtime is)
+           #:attr state #'(n)
+           #:attr f #'()
+           )
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Fusable Stream Consumers

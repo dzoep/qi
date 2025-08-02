@@ -157,11 +157,15 @@
          ;; capture the codegen in an instance of
          ;; the compile time struct
          (define-syntax info
-           (deforestable-info codegen-f #'f))
+           (deforestable-info codegen-f #'#f #f))
 
          (define-dsl-syntax name qi-macro
            (op-transformer #'name #'info #'(op spec ...))))]
-    [(_ (name spec ...+) codegen (lambda (rarg ...) rbody ...))
+    [(_
+      (~or (~and #:transformer transformer-kw)
+           (~and #:producer producer-kw)
+           (~and #:consumer consumer-kw))
+      (name spec ...+) codegen (lambda (rarg ...) rbody ...))
      #:with ([_typ arg] ...) #'(spec ...)
      #:with codegen-f #'(lambda (arg ...)
                           ;; var bindings vs pattern bindings
@@ -172,6 +176,9 @@
                           (with-syntax ([arg arg] ...)
                             codegen))
      #:with runtime-cstream-next (format-id this-syntax "~a-cstream-next" #'name)
+     #:with kind (cond ((attribute transformer-kw) #''T)
+                       ((attribute producer-kw) #''P)
+                       ((attribute consumer-kw) #''C))
      #'(begin
 
          (define-inline (runtime-cstream-next rarg ...)
@@ -180,7 +187,7 @@
          ;; capture the codegen in an instance of
          ;; the compile time struct
          (define-syntax info
-           (deforestable-info codegen-f #'runtime-cstream-next))
+           (deforestable-info codegen-f #'runtime-cstream-next kind))
 
          (define-dsl-syntax name qi-macro
            (op-transformer #'name #'info #'(op spec ...))))]
@@ -191,7 +198,7 @@
          ;; capture the codegen in an instance of
          ;; the compile time struct
          (define-syntax info
-           (deforestable-info codegen-f #'f))
+           (deforestable-info codegen-f #'f #f))
 
          (define-dsl-syntax name qi-macro
            (op-transformer #'name #'info #'op)))]))

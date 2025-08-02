@@ -17,7 +17,7 @@
 ;; Used only in deforest-rewrite to properly recognize the end of
 ;; fusable sequence.
 (define-syntax-class non-fusable
-  (pattern (~not (~or _:fst-syntax
+  (pattern (~not (~or _:fst-new
                       _:fsp-syntax
                       _:fsc-syntax))))
 
@@ -28,7 +28,7 @@
        [((~datum thread) _0:non-fusable ...
                          p:fsp-syntax
                          ;; There can be zero transformers here:
-                         t:fst-syntax ...
+                         t:fst-new ...
                          c:fsc-syntax
                          _1 ...)
         #:with fused (generate-fused-operation
@@ -36,7 +36,7 @@
                       stx)
         #'(thread _0 ... fused _1 ...)]
        [((~datum thread) _0:non-fusable ...
-                         t:fst-syntax ...+
+                         t:fst-new ...+
                          c:fsc-syntax
                          _1 ...)
         #:with fused (generate-fused-operation
@@ -46,15 +46,15 @@
        [((~datum thread) _0:non-fusable ...
                          p:fsp-syntax
                          ;; Must be 1 or more transformers here:
-                         t:fst-syntax ...+
+                         t:fst-new ...+
                          _1 ...)
         #:with fused (generate-fused-operation
                       (syntax->list #'(p t ... cstream->list))
                       stx)
         #'(thread _0 ... fused _1 ...)]
        [((~datum thread) _0:non-fusable ...
-                         f1:fst-syntax
-                         f:fst-syntax ...+
+                         f1:fst-new
+                         f:fst-new ...+
                          _1 ...)
         #:with fused (generate-fused-operation
                       (syntax->list #'(list->cstream f1 f ... cstream->list))
