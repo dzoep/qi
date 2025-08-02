@@ -133,7 +133,13 @@
       (test-true "take"
                  (take-deforested?
                   (test-deforest
-                   #'(~> (filter odd?) (take 3)))))))
+                   #'(~> (filter odd?) (take 3))))))
+     (test-suite
+      "filter-not"
+      (test-true "filter-not"
+                 (filter-not-deforested?
+                  (test-deforest
+                   #'(~> (filter-not odd?) (map sqr)))))))
 
     (test-suite
      "producers"
