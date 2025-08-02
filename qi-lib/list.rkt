@@ -78,6 +78,18 @@
                      (yield value new-state)))
              state))))))
 
+(define-deforestable #:transformer (filter-not [floe f])
+  #'(lambda (vs)
+      (r:filter-not f vs))
+  (lambda (f next ctx src)
+    (λ (done skip yield)
+      (next done
+            skip
+            (λ (value state)
+              (if (f value)
+                  (skip state)
+                  (yield value state)))))))
+
 ;;
 
 (define-deforestable (foldl [floe f] [expr init])
