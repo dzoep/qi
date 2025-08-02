@@ -19,7 +19,7 @@
 
 ;; Transformers
 
-(define-deforestable (map [floe f])
+(define-deforestable #:transformer (map [floe f])
   #'(lambda (vs)  ; single list arg
       (r:map f vs))
   (lambda (f next ctx src)
@@ -29,7 +29,7 @@
             (λ (value state)
               (yield (f value) state))))))
 
-(define-deforestable (filter [floe f])
+(define-deforestable #:transformer (filter [floe f])
   #'(λ (vs)
       (r:filter f vs))
   (lambda (f next ctx src)
@@ -41,7 +41,7 @@
                   (yield value state)
                   (skip state)))))))
 
-(define-deforestable (filter-map [floe f])
+(define-deforestable #:transformer (filter-map [floe f])
   #'(λ (vs)
       (r:filter-map f vs))
   (lambda (f next ctx src)
@@ -54,7 +54,7 @@
                     (yield fv state)
                     (skip state))))))))
 
-(define-deforestable (take [expr n])
+(define-deforestable #:transformer (take [expr n])
   #'(λ (vs)
       (r:take vs n))
   (lambda (next ctx src)

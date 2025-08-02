@@ -155,29 +155,6 @@
     )
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;; Transformers
-
-  (define-syntax-class fst
-    #:attributes (next f state)
-    (pattern filter:fst-filter
-             #:attr f #'(filter.f)
-             #:attr next (deforestable-info-runtime (syntax-local-value #'filter.info))
-             #:attr state #'())
-    (pattern map:fst-map
-             #:attr f #'(map.f)
-             #:attr next (deforestable-info-runtime (syntax-local-value #'map.info))
-             #:attr state #'())
-    (pattern filter-map:fst-filter-map
-             #:attr f #'(filter-map.f)
-             #:attr next (deforestable-info-runtime (syntax-local-value #'filter-map.info))
-             #:attr state #'())
-    (pattern take:fst-take
-             #:attr f #'()
-             #:attr next (deforestable-info-runtime (syntax-local-value #'take.info))
-             #:attr state #'(take.n))
-    )
-
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Consumers
 
   (define-syntax-class fsc
@@ -203,7 +180,7 @@
   (define-and-register-deforest-pass (deforest-pass ops ctx)
     (syntax-parse (reverse ops)
       [(c:fsc
-        t:fst ...
+        t:fst-new ...
         p:fsp)
        ;; A static runtime contract is placed at the beginning of the
        ;; fused sequence. And runtime checks for consumers are in
@@ -266,8 +243,6 @@
       [(l h) (next (consing (list l h 1)))]
       [(l h s) (next (consing (list l h s)))]
       [rest (void)]))
-
-  ;; Transformers
 
   ;; Consumers
 
