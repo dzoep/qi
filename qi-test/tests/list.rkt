@@ -7,7 +7,7 @@
          rackunit
          rackunit/text-ui
          syntax/macro-testing
-         (only-in racket/function thunk)
+         (only-in racket/function thunk identity)
          (only-in racket/string non-empty-string?)
          (only-in math sqr))
 
@@ -112,6 +112,24 @@
                         null)))
       (test-equal? "take none from empty list"
                    ((☯ (take 0))
+                    null)
+                   null))
+     (test-suite
+      "list-tail (stateful transformer)"
+      (test-equal? "simple list"
+                   ((☯ (~> (filter odd?) (list-tail 2)))
+                    (list 0 1 2 3 4 5 6 7 8 9))
+                   (list 5 7 9))
+      (test-equal? "drop none"
+                   ((☯ (~> (filter identity) (list-tail 0)))
+                    (list 1 2 3))
+                   (list 1 2 3))
+      (test-exn "drop 2 from empty list"
+                exn:fail:contract?
+                (thunk ((☯ (~> (filter identity) (list-tail 2)))
+                        null)))
+      (test-equal? "drop none from empty list"
+                   ((☯ (~> (filter identity) (list-tail 0)))
                     null)
                    null)))
 

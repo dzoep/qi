@@ -4,6 +4,7 @@
          range-deforested?
          filter-deforested?
          filter-not-deforested?
+         list-tail-deforested?
          map-deforested?
          filter-map-deforested?
          take-deforested?
@@ -33,6 +34,9 @@
 
 (define (filter-not-deforested? exp)
   (string-contains? (format "~a" exp) "filter-not-cstream"))
+
+(define (list-tail-deforested? exp)
+  (string-contains? (format "~a" exp) "list-tail-cstream"))
 
 (define (map-deforested? exp)
   (string-contains? (format "~a" exp) "map-cstream"))
