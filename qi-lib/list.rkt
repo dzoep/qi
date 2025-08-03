@@ -4,7 +4,8 @@
                     (except-out (all-defined-out)
                                 range2
                                 range)
-                    (rename-out [range2 range])))
+                    (rename-out [range2 range])
+                    (rename-out [list-tail drop])))
 
 (require (for-syntax racket/base
                      "private/util.rkt")
@@ -89,6 +90,35 @@
               (if (f value)
                   (skip state)
                   (yield value state)))))))
+
+(define-deforestable #:transformer (list-tail [expr n])
+  #'(lambda (vs)
+      (r:list-tail vs n))
+  (lambda (next ctx src)
+    (λ (done skip yield)
+      (λ (drop-state)
+        (define n (car drop-state))
+        (define state (cdr drop-state))
+        (if (zero? n)
+            ((next done
+                   (λ (state)
+                     (skip (cons n state)))
+                   (λ (value state)
+                     (define new-state (cons n state))
+                     (yield value new-state)))
+             state)
+            ((next (λ ()
+                     ((contract (-> pair? any)
+                                (λ (v) v)
+                                'list-tail ctx
+                                #f
+                                src)
+                      '()))
+                   (λ (state)
+                     (skip (cons n state)))
+                   (λ (value state)
+                     (skip (cons (sub1 n) state))))
+             state))))))
 
 ;;
 

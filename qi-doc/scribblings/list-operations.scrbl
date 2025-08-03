@@ -29,6 +29,9 @@ syntax is given below:
       (range expr expr)
       (range expr expr expr)
       (take expr)
+      (filter-not floe)
+      (list-tail expr)
+      (drop expr)
       car
       cadr
       caddr
@@ -93,6 +96,26 @@ Deforestable version of @racket[filter-map] from @racketmodname[racket/list].
   ((pos exact-nonnegative-integer?))]{
 
 Deforestable version of @racket[take] from @racketmodname[racket/list].
+
+}
+
+@defform[
+  (filter-not pred)
+  #:contracts
+  ((pred (-> any/c any/c)))]{
+
+Deforestable version of @racket[filter-not] from @racketmodname[racket/list].
+
+}
+
+@defform*[
+  ((list-tail pos)
+   (drop pos))
+  #:contracts
+  ((pos exact-nonnegative-integer?))]{
+
+Deforestable version of @racket[list-tail]/@racket[drop] from
+@racketmodname[racket/base].
 
 }
 

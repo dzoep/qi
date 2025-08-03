@@ -139,7 +139,13 @@
       (test-true "filter-not"
                  (filter-not-deforested?
                   (test-deforest
-                   #'(~> (filter-not odd?) (map sqr)))))))
+                   #'(~> (filter-not odd?) (map sqr))))))
+     (test-suite
+      "list-tail"
+      (test-true "list-tail"
+                 (list-tail-deforested?
+                  (test-deforest
+                   #'(~> (filter odd?) (list-tail 2)))))))
 
     (test-suite
      "producers"
