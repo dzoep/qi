@@ -46,30 +46,6 @@
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Producers
 
-  ;; Special "curry"ing for #%fine-templates. All #%host-expressions are
-  ;; passed as they are and all (~datum _) are replaced by wrapper
-  ;; lambda arguments.
-  (define ((make-fine-curry argstx) ctx name)
-    (define argstxlst (syntax->list argstx))
-    (define temporaries (generate-temporaries argstxlst))
-    (define-values (allargs tmpargs)
-      (for/fold ([all '()]
-                 [tmps '()]
-                 #:result (values (reverse all)
-                                  (reverse tmps)))
-                ([tmp (in-list temporaries)]
-                 [arg (in-list argstxlst)])
-        (syntax-parse arg
-          #:datum-literals (#%host-expression)
-          [(#%host-expression ex)
-           (values (cons #'ex all)
-                   tmps)])))
-    (with-syntax ([(carg ...) tmpargs]
-                  [(aarg ...) allargs])
-      #'(lambda (proc)
-          (lambda (carg ...)
-            (proc aarg ...)))))
-
   (define-syntax-class fsp
     #:attributes (curry name contract prepare next)
     (pattern range:fsp-range
@@ -77,13 +53,18 @@
              #:attr contract #'(-> real? real? real? any)
              #:attr prepare #'range->cstream-prepare
              #:attr next #'range->cstream-next
-             #:attr curry (make-fine-curry #'range.arg))
+             #:attr state #'range.state
+             #:attr curry  (lambda (ctx name)
+                             #`(lambda (proc)
+                                 (lambda ()
+                                   (proc #,@#'range.arg)))))
     (pattern default:fsp-default
              #:attr name #''list->cstream
              #:attr contract #'(-> list? any)
              #:attr prepare #'list->cstream-prepare
              #:attr next #'list->cstream-next
-             #:attr curry (lambda (ctx name) #'(lambda (v) v)))
+             #:attr curry (lambda (ctx name) #'(lambda (v) v))
+             #:attr state #'default.state)
     )
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -150,6 +131,15 @@
 
 (begin-encourage-inline
 
+  (define-inline (list->cstream-prepare consing next)
+    (lambda (lst)
+      (next (consing lst))))
+
+  (define-inline (range->cstream-prepare consing next)
+    (lambda (l h s)
+      (next (consing (list l h s)))))
+
+
   ;; Producers
 
   (define-inline (list->cstream-next done skip yield)
@@ -157,20 +147,12 @@
       (cond [(null? state) (done)]
             [else (yield (car state) (cdr state))])))
 
-  (define-inline (list->cstream-prepare consing next)
-    (lambda (lst)
-      (next (consing lst))))
-
   (define-inline (range->cstream-next done skip yield)
     (λ (state)
       (match-define (list l h s) state)
       (cond [(< l h)
              (yield l (cons (+ l s) (cdr state)))]
             [else (done)])))
-
-  (define-inline (range->cstream-prepare consing next)
-    (lambda (l h s)
-      (next (consing (list l h s)))))
 
   ;; Consumers
 
