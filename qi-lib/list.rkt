@@ -121,6 +121,24 @@
                      (skip (cons (sub1 n) state))))
              state))))))
 
+(define-qi-syntax-parser rest
+  [_:id #'(list-tail 1)])
+
+(define-qi-syntax-parser cdr
+  [_:id #'(list-tail 1)])
+
+(define-qi-syntax-parser cddr
+  [_:id #'(list-tail 2)])
+
+(define-qi-syntax-parser cdddr
+  [_:id #'(list-tail 3)])
+
+(define-qi-syntax-parser cddddr
+  [_:id #'(list-tail 4)])
+
+(define-qi-syntax-parser cdddddr
+  [_:id #'(list-tail 5)])
+
 ;; Producers
 
 (define-deforestable #:producer (range [expr low] [expr high] [expr step])
