@@ -63,6 +63,18 @@
   (pattern (~or _:fsp-range
                 _:fsp-default)))
 
+(define-syntax-class fsp-new
+  #:attributes (curry contract prepare next name)
+  #:literal-sets (fs-literals)
+  (pattern (#%deforestable name _info ((~datum expr) the-arg) ...)
+           #:do ((define is (syntax-local-value #'_info)))
+           #:when (and (deforestable-info? is)
+                       (eq? (deforestable-info-kind is) 'P))
+           #:attr curry (lambda () #'(lambda (proc) proc))
+           #:attr contract #'(-> list? any)
+           #:attr prepare #f
+           #:attr next #f))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Fusable Stream Transformers
 ;;
