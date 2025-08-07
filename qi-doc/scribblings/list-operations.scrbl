@@ -32,6 +32,12 @@ syntax is given below:
       (filter-not floe)
       (list-tail expr)
       (drop expr)
+      rest
+      cdr
+      cddr
+      cdddr
+      cddddr
+      cdddddr
       car
       cadr
       caddr
@@ -116,6 +122,36 @@ Deforestable version of @racket[filter-not] from @racketmodname[racket/list].
 
 Deforestable version of @racket[list-tail]/@racket[drop] from
 @racketmodname[racket/base].
+
+}
+
+@defidform[rest]{
+
+Deforestable version of @racket[rest] from @racketmodname[racket/base].
+
+}
+
+@defidform[cdr]{
+
+Deforestable version of @racket[cdr] from @racketmodname[racket/base].
+
+}
+
+@defidform[cddr]{
+
+Deforestable version of @racket[cddr] from @racketmodname[racket/base].
+
+}
+
+@defidform[cdddr]{
+
+Deforestable version of @racket[cdddr] from @racketmodname[racket/base].
+
+}
+
+@defidform[cddddr]{
+
+Deforestable version of @racket[cddddr] from @racketmodname[racket/base].
 
 }
 
