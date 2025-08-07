@@ -47,25 +47,23 @@
   ;; Producers
 
   (define-syntax-class fsp
-    #:attributes (curry name contract prepare next)
+    #:attributes (name contract prepare next)
     (pattern range:fsp-range
              #:attr name #''range
-             #:attr contract #'(-> real? real? real? any)
-             #:attr prepare #'range->cstream-prepare
-             #:attr next #'range->cstream-next
-             #:attr state #'range.state
-             #:attr curry  (lambda (ctx name)
-                             #`(lambda (proc)
+             #:attr contract #'()
+             #:attr prepare #`(lambda (consing next)
                                  (lambda ()
-                                   (proc #,@#'range.arg)))))
+                                   (next (consing (list #,@#'range.arg)))))
+             #:attr next #'range->cstream-next
+             #:attr state #'range.state)
     (pattern default:fsp-default
              #:attr name #''list->cstream
-             #:attr contract #'(-> list? any)
-             #:attr prepare #'list->cstream-prepare
+             #:attr contract #'(list?)
+             #:attr prepare #`(lambda (consing next)
+                                 (lambda (lst)
+                                   (next (consing lst))))
              #:attr next #'list->cstream-next
-             #:attr curry (lambda (ctx name) #'(lambda (v) v))
-             #:attr state #'default.state)
-    )
+             #:attr state #'default.state))
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Consumers
@@ -101,28 +99,26 @@
        (with-syntax (((rt ...) (reverse (attribute t.state))))
          (attach-form-property
           #`(esc
-             (#,((attribute p.curry) ctx (attribute p.name))
-              (contract p.contract
-                        (p.prepare
-                         (lambda (state)
-                           (define cstate (inline-consing state rt ...))
-                           cstate)
-                         (#,@#'c.end
-                          (inline-compose1 [t.next t.f
-                                                   '#,(prettify-flow-syntax ctx)
-                                                   '#,(build-source-location-vector
-                                                       (syntax-srcloc ctx))
-                                                   ] ...
-                                           p.next
-                                           )
-                          '#,(prettify-flow-syntax ctx)
-                          '#,(build-source-location-vector
-                              (syntax-srcloc ctx))))
-                        p.name
-                        '#,(prettify-flow-syntax ctx)
-                        #f
-                        '#,(build-source-location-vector
-                            (syntax-srcloc ctx)))))))]))
+             (contract (-> #,@#'p.contract any)
+                       (p.prepare
+                        (lambda (state)
+                          (inline-consing state rt ...))
+                        (#,@#'c.end
+                         (inline-compose1 [t.next t.f
+                                                  '#,(prettify-flow-syntax ctx)
+                                                  '#,(build-source-location-vector
+                                                      (syntax-srcloc ctx))
+                                                  ] ...
+                                          p.next
+                                          )
+                         '#,(prettify-flow-syntax ctx)
+                         '#,(build-source-location-vector
+                             (syntax-srcloc ctx))))
+                       p.name
+                       '#,(prettify-flow-syntax ctx)
+                       #f
+                       '#,(build-source-location-vector
+                           (syntax-srcloc ctx))))))]))
 
   )
 
@@ -130,15 +126,6 @@
 ;; Runtime
 
 (begin-encourage-inline
-
-  (define-inline (list->cstream-prepare consing next)
-    (lambda (lst)
-      (next (consing lst))))
-
-  (define-inline (range->cstream-prepare consing next)
-    (lambda (l h s)
-      (next (consing (list l h s)))))
-
 
   ;; Producers
 
