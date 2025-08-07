@@ -44,10 +44,11 @@
 ;; All are prefixed with fsp- for clarity.
 
 (define-syntax-class fsp-range
-  #:attributes (arg state)
+  #:attributes (arg state info)
   #:literal-sets (fs-literals)
   #:datum-literals (range)
   (pattern (#%deforestable range _info ((~datum expr) the-arg) ...)
+           #:attr info #'_info
            #:attr state #'((list the-arg ...))
            #:attr arg #'(the-arg ...)))
 

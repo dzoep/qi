@@ -54,7 +54,10 @@
              #:attr prepare #`(lambda (consing next)
                                  (lambda ()
                                    (next (consing (list #,@#'range.arg)))))
-             #:attr next #'range->cstream-next
+             #:do ((define is (syntax-local-value #'range.info)))
+             #:when (and (deforestable-info? is)
+                         (eq? (deforestable-info-kind is) 'P))
+             #:attr next (deforestable-info-runtime is)
              #:attr state #'range.state)
     (pattern default:fsp-default
              #:attr name #''list->cstream
@@ -133,13 +136,6 @@
     (λ (state)
       (cond [(null? state) (done)]
             [else (yield (car state) (cdr state))])))
-
-  (define-inline (range->cstream-next done skip yield)
-    (λ (state)
-      (match-define (list l h s) state)
-      (cond [(< l h)
-             (yield l (cons (+ l s) (cdr state)))]
-            [else (done)])))
 
   ;; Consumers
 

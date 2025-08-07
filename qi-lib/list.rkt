@@ -16,7 +16,8 @@
          "macro.rkt"
          (prefix-in r: racket/base)
          (prefix-in r: racket/list)
-         racket/contract/base)
+         racket/contract/base
+         racket/match)
 
 ;; Transformers
 
@@ -120,19 +121,17 @@
                      (skip (cons (sub1 n) state))))
              state))))))
 
-;;
+;; Producers
 
-(define-deforestable (foldl [floe f] [expr init])
-  #'(λ (vs)
-      (r:foldl f init vs)))
-
-(define-deforestable (foldr [floe f] [expr init])
-  #'(λ (vs)
-      (r:foldr f init vs)))
-
-(define-deforestable (range [expr low] [expr high] [expr step])
+(define-deforestable #:producer (range [expr low] [expr high] [expr step])
   #'(λ ()
-      (r:range low high step)))
+      (r:range low high step))
+  (lambda (done skip yield)
+    (λ (state)
+      (match-define (list l h s) state)
+      (cond [(< l h)
+             (yield l (cons (+ l s) (cdr state)))]
+            [else (done)]))))
 
 ;; We'd like to indicate multiple surface variants for `range` that
 ;; expand to a canonical form, and provide a single codegen just for the
@@ -151,6 +150,16 @@
   [_:id (report-syntax-error this-syntax
           "(range arg ...)"
           "range expects at least one argument")])
+
+;;
+
+(define-deforestable (foldl [floe f] [expr init])
+  #'(λ (vs)
+      (r:foldl f init vs)))
+
+(define-deforestable (foldr [floe f] [expr init])
+  #'(λ (vs)
+      (r:foldr f init vs)))
 
 (define-deforestable car
   #'r:car)
