@@ -44,21 +44,20 @@
 ;; All are prefixed with fsp- for clarity.
 
 (define-syntax-class fsp-range
-  #:attributes (blanket? fine? arg pre-arg post-arg)
+  #:attributes (arg state)
   #:literal-sets (fs-literals)
   #:datum-literals (range)
   (pattern (#%deforestable range _info ((~datum expr) the-arg) ...)
-    #:attr arg #'(the-arg ...)
-    #:attr pre-arg #f
-    #:attr post-arg #f
-    #:attr blanket? #f
-    #:attr fine? #t))
+           #:attr state #'((list the-arg ...))
+           #:attr arg #'(the-arg ...)))
 
 (define-syntax-class fsp-default
   #:datum-literals (list->cstream)
+  #:attributes (state)
   (pattern list->cstream
            #:attr contract #'(-> list? any)
-           #:attr name #''list->cstream))
+           #:attr name #''list->cstream
+           #:attr state #'()))
 
 (define-syntax-class fsp-syntax
   (pattern (~or _:fsp-range
