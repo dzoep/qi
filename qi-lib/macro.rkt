@@ -175,10 +175,15 @@
                           ;; as pattern bindings
                           (with-syntax ([arg arg] ...)
                             codegen))
-     #:with runtime-cstream-next (format-id this-syntax "~a-cstream-next" #'name)
      #:with kind (cond ((attribute transformer-kw) #''T)
                        ((attribute producer-kw) #''P)
                        ((attribute consumer-kw) #''C))
+     #:with runtime-cstream-next (format-id this-syntax
+                                            "~a~acstream-next"
+                                            #'name
+                                            (if (attribute producer-kw)
+                                                "->"
+                                                "-"))
      #'(begin
 
          (define-inline (runtime-cstream-next rarg ...)
