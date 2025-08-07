@@ -49,22 +49,8 @@
   ;; Special "curry"ing for #%fine-templates. All #%host-expressions are
   ;; passed as they are and all (~datum _) are replaced by wrapper
   ;; lambda arguments.
-  (define ((make-fine-curry argstx minargs maxargs form-stx) ctx name)
+  (define ((make-fine-curry argstx) ctx name)
     (define argstxlst (syntax->list argstx))
-    (define numargs (length argstxlst))
-    (cond
-      [(< numargs minargs)
-       (raise-syntax-error (syntax->datum name)
-                           (format "too few arguments - given ~a - accepts at least ~a"
-                                   numargs minargs)
-                           (prettify-flow-syntax ctx)
-                           (prettify-flow-syntax form-stx))]
-      [(> numargs maxargs)
-       (raise-syntax-error (syntax->datum name)
-                           (format "too many arguments - given ~a - accepts at most ~a"
-                                   numargs maxargs)
-                           (prettify-flow-syntax ctx)
-                           (prettify-flow-syntax form-stx))])
     (define temporaries (generate-temporaries argstxlst))
     (define-values (allargs tmpargs)
       (for/fold ([all '()]
@@ -77,75 +63,21 @@
           #:datum-literals (#%host-expression)
           [(#%host-expression ex)
            (values (cons #'ex all)
-                   tmps)]
-          [(~datum _)
-           (values (cons tmp all)
-                   (cons tmp tmps))])))
+                   tmps)])))
     (with-syntax ([(carg ...) tmpargs]
                   [(aarg ...) allargs])
       #'(lambda (proc)
           (lambda (carg ...)
             (proc aarg ...)))))
 
-  ;; Special curry for #%blanket-template. Raises syntax error if there
-  ;; are too many arguments. If the number of arguments is exactly the
-  ;; maximum, wraps into lambda without any arguments. If less than
-  ;; maximum, curries it from both left and right.
-  (define ((make-blanket-curry prestx poststx maxargs form-stx) ctx name)
-    (define prelst (syntax->list prestx))
-    (define postlst (syntax->list poststx))
-    (define numargs (+ (length prelst) (length postlst)))
-    (with-syntax ([(pre-arg ...) prelst]
-                  [(post-arg ...) postlst])
-      (cond
-        [(> numargs maxargs)
-         (raise-syntax-error (syntax->datum name)
-                             (format "too many arguments - given ~a - accepts at most ~a"
-                                     numargs maxargs)
-                             (prettify-flow-syntax ctx)
-                             (prettify-flow-syntax form-stx))]
-        [(= numargs maxargs)
-         #'(lambda (v)
-             (lambda ()
-               (v pre-arg ... post-arg ...)))]
-        [else
-         #'(lambda (v)
-             (lambda rest
-               (apply v pre-arg ...
-                      (append rest
-                              (list post-arg ...)))))])))
-  ;; Unifying producer curry makers. The ellipsis escaping allows for
-  ;; simple specification of pattern variable names as bound in the
-  ;; syntax pattern.
-  (define-syntax make-producer-curry
-    (syntax-rules ()
-      [(_ min-args max-args
-          blanket? pre-arg post-arg
-          fine? arg
-          form-stx)
-       (cond
-         [(attribute blanket?)
-          (make-blanket-curry pre-arg
-                              post-arg
-                              max-args
-                              #'form-stx
-                              )]
-         [(attribute fine?)
-          (make-fine-curry arg min-args max-args #'form-stx)]
-         [else
-          (lambda (ctx name) #'(lambda (v) v))])]))
-
   (define-syntax-class fsp
     #:attributes (curry name contract prepare next)
     (pattern range:fsp-range
              #:attr name #''range
-             #:attr contract #'(->* (real?) (real? real?) any)
+             #:attr contract #'(-> real? real? real? any)
              #:attr prepare #'range->cstream-prepare
              #:attr next #'range->cstream-next
-             #:attr curry (make-producer-curry 1 3
-                                               range.blanket? #'range.pre-arg #'range.post-arg
-                                               range.fine? #'range.arg
-                                               range))
+             #:attr curry (make-fine-curry #'range.arg))
     (pattern default:fsp-default
              #:attr name #''list->cstream
              #:attr contract #'(-> list? any)
@@ -226,9 +158,8 @@
             [else (yield (car state) (cdr state))])))
 
   (define-inline (list->cstream-prepare consing next)
-    (case-lambda
-      [(lst) (next (consing lst))]
-      [rest (void)]))
+    (lambda (lst)
+      (next (consing lst))))
 
   (define-inline (range->cstream-next done skip yield)
     (λ (state)
@@ -238,11 +169,8 @@
             [else (done)])))
 
   (define-inline (range->cstream-prepare consing next)
-    (case-lambda
-      [(h) (next (consing (list 0 h 1)))]
-      [(l h) (next (consing (list l h 1)))]
-      [(l h s) (next (consing (list l h s)))]
-      [rest (void)]))
+    (lambda (l h s)
+      (next (consing (list l h s)))))
 
   ;; Consumers
 
