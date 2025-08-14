@@ -51,7 +51,7 @@
     (pattern range:fsp-range
              #:do ((define is (syntax-local-value #'range.info)))
              #:attr name #''range
-             #:attr contract #'()
+             #:attr contract #`(#,@(deforestable-info-rtacontract is))
              #:attr prepare (apply (deforestable-info-prepare is) (syntax->list #'range.es^))
              #:do ((define is (syntax-local-value #'range.info)))
              #:when (and (deforestable-info? is)
