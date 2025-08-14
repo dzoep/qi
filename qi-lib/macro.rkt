@@ -157,13 +157,12 @@
          ;; capture the codegen in an instance of
          ;; the compile time struct
          (define-syntax info
-           (deforestable-info codegen-f #'#f #f))
+           (deforestable-info codegen-f #'#f #f #f))
 
          (define-dsl-syntax name qi-macro
            (op-transformer #'name #'info #'(op spec ...))))]
     [(_
       (~or (~and #:transformer transformer-kw)
-           (~and #:producer producer-kw)
            (~and #:consumer consumer-kw))
       (name spec ...+) codegen (lambda (rarg ...) rbody ...))
      #:with ([_typ arg] ...) #'(spec ...)
@@ -176,14 +175,10 @@
                           (with-syntax ([arg arg] ...)
                             codegen))
      #:with kind (cond ((attribute transformer-kw) #''T)
-                       ((attribute producer-kw) #''P)
                        ((attribute consumer-kw) #''C))
      #:with runtime-cstream-next (format-id this-syntax
-                                            "~a~acstream-next"
-                                            #'name
-                                            (if (attribute producer-kw)
-                                                "->"
-                                                "-"))
+                                            "~a-cstream-next"
+                                            #'name)
      #'(begin
 
          (define-inline (runtime-cstream-next rarg ...)
@@ -192,7 +187,47 @@
          ;; capture the codegen in an instance of
          ;; the compile time struct
          (define-syntax info
-           (deforestable-info codegen-f #'runtime-cstream-next kind))
+           (deforestable-info codegen-f #'runtime-cstream-next kind #f))
+
+         (define-dsl-syntax name qi-macro
+           (op-transformer #'name #'info #'(op spec ...))))]
+    [(_
+      #:producer
+      (name spec ...+)
+      codegen ;; fallback
+      ((~datum lambda) (rarg ...) rbody ...) ;; CPS producer
+      prepare
+      )
+     #:with ([_typ arg] ...) #'(spec ...)
+     #:with prepare-f #'(lambda (arg ...)
+                          ;; var bindings vs pattern bindings
+                          ;; arg are syntax objects but we can't
+                          ;; use them as variable bindings, so
+                          ;; we use with-syntax to handle them
+                          ;; as pattern bindings
+                          (with-syntax ([arg arg] ...)
+                            prepare))
+     #:with codegen-f #'(lambda (arg ...)
+                          ;; var bindings vs pattern bindings
+                          ;; arg are syntax objects but we can't
+                          ;; use them as variable bindings, so
+                          ;; we use with-syntax to handle them
+                          ;; as pattern bindings
+                          (with-syntax ([arg arg] ...)
+                            codegen))
+     #:with kind  #''P
+     #:with runtime-cstream-next (format-id this-syntax
+                                            "~a->cstream-next"
+                                            #'name)
+     #'(begin
+
+         (define-inline (runtime-cstream-next rarg ...)
+           rbody ...)
+
+         ;; capture the codegen in an instance of
+         ;; the compile time struct
+         (define-syntax info
+           (deforestable-info codegen-f #'runtime-cstream-next kind prepare-f))
 
          (define-dsl-syntax name qi-macro
            (op-transformer #'name #'info #'(op spec ...))))]
@@ -203,7 +238,7 @@
          ;; capture the codegen in an instance of
          ;; the compile time struct
          (define-syntax info
-           (deforestable-info codegen-f #'f #f))
+           (deforestable-info codegen-f #'f #f #f))
 
          (define-dsl-syntax name qi-macro
            (op-transformer #'name #'info #'op)))]))

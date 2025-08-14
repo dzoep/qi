@@ -43,14 +43,21 @@
 ;;
 ;; All are prefixed with fsp- for clarity.
 
+;; TODO: this procedure is copied from 1000-qi0.rkt, it should
+;; probably be moved to a supporting module for both the fallback
+;; codegen and this syntax class.
+(define (deforestable-clause-parser c)
+  (syntax-parse c
+    [((~datum floe) e) #'(qi0->racket e)]
+    [((~datum expr) e) #'e]))
+
 (define-syntax-class fsp-range
-  #:attributes (arg state info)
+  #:attributes (info es^)
   #:literal-sets (fs-literals)
   #:datum-literals (range)
-  (pattern (#%deforestable range _info ((~datum expr) the-arg) ...)
+  (pattern (#%deforestable range _info c ...)
            #:attr info #'_info
-           #:attr state #'((list the-arg ...))
-           #:attr arg #'(the-arg ...)))
+           #:attr es^ #`#,(map deforestable-clause-parser (attribute c))))
 
 (define-syntax-class fsp-default
   #:datum-literals (list->cstream)
@@ -63,18 +70,6 @@
 (define-syntax-class fsp-syntax
   (pattern (~or _:fsp-range
                 _:fsp-default)))
-
-(define-syntax-class fsp-new
-  #:attributes (curry contract prepare next name)
-  #:literal-sets (fs-literals)
-  (pattern (#%deforestable name _info ((~datum expr) the-arg) ...)
-           #:do ((define is (syntax-local-value #'_info)))
-           #:when (and (deforestable-info? is)
-                       (eq? (deforestable-info-kind is) 'P))
-           #:attr curry (lambda () #'(lambda (proc) proc))
-           #:attr contract #'(-> list? any)
-           #:attr prepare #f
-           #:attr next #f))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Fusable Stream Transformers

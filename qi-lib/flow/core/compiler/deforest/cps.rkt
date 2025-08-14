@@ -49,16 +49,14 @@
   (define-syntax-class fsp
     #:attributes (name contract prepare next)
     (pattern range:fsp-range
+             #:do ((define is (syntax-local-value #'range.info)))
              #:attr name #''range
              #:attr contract #'()
-             #:attr prepare #`(lambda (consing next)
-                                 (lambda ()
-                                   (next (consing (list #,@#'range.arg)))))
+             #:attr prepare (apply (deforestable-info-prepare is) (syntax->list #'range.es^))
              #:do ((define is (syntax-local-value #'range.info)))
              #:when (and (deforestable-info? is)
                          (eq? (deforestable-info-kind is) 'P))
-             #:attr next (deforestable-info-runtime is)
-             #:attr state #'range.state)
+             #:attr next (deforestable-info-runtime is))
     (pattern default:fsp-default
              #:attr name #''list->cstream
              #:attr contract #'(list?)
