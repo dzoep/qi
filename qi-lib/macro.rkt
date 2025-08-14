@@ -157,7 +157,7 @@
          ;; capture the codegen in an instance of
          ;; the compile time struct
          (define-syntax info
-           (deforestable-info codegen-f #'#f #f #f))
+           (deforestable-info codegen-f #'#f #f #f #f))
 
          (define-dsl-syntax name qi-macro
            (op-transformer #'name #'info #'(op spec ...))))]
@@ -187,7 +187,7 @@
          ;; capture the codegen in an instance of
          ;; the compile time struct
          (define-syntax info
-           (deforestable-info codegen-f #'runtime-cstream-next kind #f))
+           (deforestable-info codegen-f #'runtime-cstream-next kind #f #f))
 
          (define-dsl-syntax name qi-macro
            (op-transformer #'name #'info #'(op spec ...))))]
@@ -197,6 +197,7 @@
       codegen ;; fallback
       ((~datum lambda) (rarg ...) rbody ...) ;; CPS producer
       prepare
+      (rtacontract ...)
       )
      #:with ([_typ arg] ...) #'(spec ...)
      #:with prepare-f #'(lambda (arg ...)
@@ -227,7 +228,8 @@
          ;; capture the codegen in an instance of
          ;; the compile time struct
          (define-syntax info
-           (deforestable-info codegen-f #'runtime-cstream-next kind prepare-f))
+           (deforestable-info
+             codegen-f #'runtime-cstream-next kind prepare-f #'(rtacontract ...)))
 
          (define-dsl-syntax name qi-macro
            (op-transformer #'name #'info #'(op spec ...))))]
@@ -238,7 +240,7 @@
          ;; capture the codegen in an instance of
          ;; the compile time struct
          (define-syntax info
-           (deforestable-info codegen-f #'f #f #f))
+           (deforestable-info codegen-f #'f #f #f #f))
 
          (define-dsl-syntax name qi-macro
            (op-transformer #'name #'info #'op)))]))

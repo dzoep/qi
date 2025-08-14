@@ -152,7 +152,8 @@
             [else (done)])))
   #'(lambda (consing next)
       (lambda ()
-        (next (consing (list low high step))))))
+        (next (consing (list low high step)))))
+  ())
 
 ;; We'd like to indicate multiple surface variants for `range` that
 ;; expand to a canonical form, and provide a single codegen just for the
