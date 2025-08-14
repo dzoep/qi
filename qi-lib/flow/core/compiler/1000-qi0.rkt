@@ -419,9 +419,9 @@ already handled during expansion by Syntax Spec.
     (syntax-parse e
       #:datum-literals (#%deforestable)
       [(#%deforestable _name info c ...)
-       (let ([es^ (map deforestable-clause-parser (attribute c))])
-         (match-let ([(deforestable-info codegen runtime kind) (syntax-local-value #'info)])
-           (apply codegen es^)))]))
+       (let ([es^ (map deforestable-clause-parser (attribute c))]
+             [codegen (deforestable-info-codegen (syntax-local-value #'info))])
+         (apply codegen es^))]))
 
   (define (blanket-template-form-parser stx)
     (syntax-parse stx
