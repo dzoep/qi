@@ -155,6 +155,17 @@
         (next (consing (list low high step)))))
   ())
 
+(define-deforestable #:producer (list->cstream)
+  #'identity
+  (lambda (done skip yield)
+    (λ (state)
+      (cond [(null? state) (done)]
+            [else (yield (car state) (cdr state))])))
+  #'(lambda (consing next)
+      (lambda (lst)
+        (next (consing lst))))
+  (list?))
+
 ;; We'd like to indicate multiple surface variants for `range` that
 ;; expand to a canonical form, and provide a single codegen just for the
 ;; canonical form.

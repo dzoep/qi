@@ -1,13 +1,10 @@
 #lang racket/base
 
 (provide fst-new
+         fsp-new
 
          fsp-syntax
          fsc-syntax
-
-         fsp-range
-         fsp-default
-
 
          fsc-foldr
          fsc-foldl
@@ -70,6 +67,21 @@
 (define-syntax-class fsp-syntax
   (pattern (~or _:fsp-range
                 _:fsp-default)))
+
+(define-syntax-class fsp-new
+  #:attributes (info args contract prepare next name)
+  #:literal-sets (fs-literals)
+  (pattern (#:deforestable _name _info c ...)
+           #:do ((define is (syntax-local-value #'_info)))
+           #:with es^ #`#,(map deforestable-clause-parser (attribute c))
+           #:attr info #'_info
+           #:attr args #`#,(map deforestable-clause-parser (attribute c))
+           #:attr contract #`(#,@(deforestable-info-rtacontract is))
+           #:attr prepare (apply (deforestable-info-prepare is)
+                                 (syntax->list #'es^))
+           #:attr next (deforestable-info-runtime is)
+           #:attr name #''name
+           ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Fusable Stream Transformers

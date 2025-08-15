@@ -46,7 +46,7 @@
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Producers
 
-  (define-syntax-class fsp
+  #;(define-syntax-class fsp
     #:attributes (name contract prepare next)
     (pattern range:fsp-range
              #:do ((define is (syntax-local-value #'range.info)))
@@ -93,7 +93,7 @@
     (syntax-parse (reverse ops)
       [(c:fsc
         t:fst-new ...
-        p:fsp)
+        p:fsp-new)
        ;; A static runtime contract is placed at the beginning of the
        ;; fused sequence. And runtime checks for consumers are in
        ;; their respective implementation procedure.
