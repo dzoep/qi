@@ -3,12 +3,16 @@
 (provide define-and-register-deforest-pass)
 
 (require (for-syntax racket/base
-                     syntax/parse)
+                     syntax/parse
+                     "../../../../list.rkt")
          syntax/parse
+         racket/syntax
          "syntax.rkt"
          "../../passes.rkt"
          "../../strategy.rkt"
-         (for-template "../../passes.rkt")
+         (for-template "../../passes.rkt"
+                        "../../../../list.rkt")
+         "../../../../list.rkt"
          "../../private/form-property.rkt")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -18,7 +22,7 @@
 ;; fusable sequence.
 (define-syntax-class non-fusable
   (pattern (~not (~or _:fst-new
-                      _:fsp-syntax
+                      _:fsp-new
                       _:fsc-syntax))))
 
 (define (make-deforest-rewrite generate-fused-operation)
@@ -26,7 +30,7 @@
     (attach-form-property
      (syntax-parse stx
        [((~datum thread) _0:non-fusable ...
-                         p:fsp-syntax
+                         p:fsp-new
                          ;; There can be zero transformers here:
                          t:fst-new ...
                          c:fsc-syntax
@@ -40,11 +44,11 @@
                          c:fsc-syntax
                          _1 ...)
         #:with fused (generate-fused-operation
-                      (syntax->list #'(list->cstream t ... c))
+                      (syntax->list #'(list->cstream->cstream-next t ... c))
                       stx)
         #'(thread _0 ... fused _1 ...)]
        [((~datum thread) _0:non-fusable ...
-                         p:fsp-syntax
+                         p:fsp-new
                          ;; Must be 1 or more transformers here:
                          t:fst-new ...+
                          _1 ...)
@@ -57,7 +61,17 @@
                          f:fst-new ...+
                          _1 ...)
         #:with fused (generate-fused-operation
-                      (syntax->list #'(list->cstream f1 f ... cstream->list))
+                      (with-syntax* ((list->cstream->cstream-next1
+                                      ((make-interned-syntax-introducer 'qi)
+                                      #'list->cstream->cstream-next)
+                                      )
+                                     (list->cstream->cstream-next
+                                      (local-expand
+                                       #'(list->cstream->cstream-next1)
+                                       'expression
+                                       '()))
+                                     )
+                        (syntax->list #'(list->cstream->cstream-next f1 f ... cstream->list)))
                       stx)
         #'(thread _0 ... fused _1 ...)]
        ;; return the input syntax unchanged if no rules

@@ -125,7 +125,7 @@
       #:datum-literals (op)
       [(op [tag arg-name] ...)
        (syntax-parser
-         [(_ e ...+)
+         [(_ e ...)
           #:fail-unless (= (length (attribute e))
                            (length (attribute arg-name)))
           "Wrong number of arguments!"
@@ -144,7 +144,7 @@
 
 (define-syntax define-deforestable
   (syntax-parser
-    [(_ (name spec ...+) codegen)
+    [(_ (name spec ...) codegen)
      #:with ([_typ arg] ...) #'(spec ...)
      #:with codegen-f #'(lambda (arg ...)
                           ;; var bindings vs pattern bindings
@@ -195,7 +195,7 @@
            (op-transformer #'name #'info #'(op spec ...))))]
     [(_
       #:producer
-      (name spec ...+)
+      (name spec ...)
       codegen ;; fallback
       ((~datum lambda) (rarg ...) rbody ...) ;; CPS producer
       prepare
@@ -243,6 +243,5 @@
          ;; the compile time struct
          (define-syntax info
            (deforestable-info codegen-f #'f #f #f #f))
-
          (define-dsl-syntax name qi-macro
            (op-transformer #'name #'info #'op)))]))
