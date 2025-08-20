@@ -4,14 +4,19 @@
 
 (require (for-syntax racket/base
                      syntax/parse
-                     "../../../../list.rkt")
+                     "../../../../list.rkt"
+         (submod "../../../../flow/extended/expander.rkt" invoke)
+
+                     )
+         (submod "../../../../flow/extended/expander.rkt" invoke)
          syntax/parse
          racket/syntax
          "syntax.rkt"
          "../../passes.rkt"
          "../../strategy.rkt"
          (for-template "../../passes.rkt"
-                        "../../../../list.rkt")
+                       (submod "../../../../flow/extended/expander.rkt" invoke)
+                       "../../../../list.rkt")
          "../../../../list.rkt"
          "../../private/form-property.rkt")
 
@@ -44,7 +49,12 @@
                          c:fsc-syntax
                          _1 ...)
         #:with fused (generate-fused-operation
-                      (syntax->list #'(list->cstream->cstream-next t ... c))
+                      (syntax->list
+                       (with-syntax ((list->cstream
+                                      (expand-flow
+                                       ((make-interned-syntax-introducer 'qi)
+                                        #'(list->cstream)))))
+                         #'(list->cstream t ... c)))
                       stx)
         #'(thread _0 ... fused _1 ...)]
        [((~datum thread) _0:non-fusable ...
@@ -61,17 +71,12 @@
                          f:fst-new ...+
                          _1 ...)
         #:with fused (generate-fused-operation
-                      (with-syntax* ((list->cstream->cstream-next1
-                                      ((make-interned-syntax-introducer 'qi)
-                                      #'list->cstream->cstream-next)
-                                      )
-                                     (list->cstream->cstream-next
-                                      (local-expand
-                                       #'(list->cstream->cstream-next1)
-                                       'expression
-                                       '()))
-                                     )
-                        (syntax->list #'(list->cstream->cstream-next f1 f ... cstream->list)))
+                      (syntax->list
+                       (with-syntax ((list->cstream
+                                      (expand-flow
+                                       ((make-interned-syntax-introducer 'qi)
+                                        #'(list->cstream)))))
+                         #'(list->cstream f1 f ... cstream->list)))
                       stx)
         #'(thread _0 ... fused _1 ...)]
        ;; return the input syntax unchanged if no rules

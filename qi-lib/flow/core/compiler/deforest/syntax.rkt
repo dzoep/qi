@@ -71,8 +71,10 @@
 (define-syntax-class fsp-new
   #:attributes (info args contract prepare next name)
   #:literal-sets (fs-literals)
-  (pattern (#:deforestable _name _info c ...)
+  (pattern (#%deforestable _name _info c ...)
            #:do ((define is (syntax-local-value #'_info)))
+           #:when (and (deforestable-info? is)
+                       (eq? (deforestable-info-kind is) 'P))
            #:with es^ #`#,(map deforestable-clause-parser (attribute c))
            #:attr info #'_info
            #:attr args #`#,(map deforestable-clause-parser (attribute c))
@@ -113,6 +115,14 @@
            #:attr next (deforestable-info-runtime is)
            #:attr state #'(n)
            #:attr f #'()
+           )
+    (pattern (#%deforestable name _info any ...)
+           #:do ((define is (syntax-local-value #'_info)))
+           #:when (and (deforestable-info? is)
+                       (eq? (deforestable-info-kind is) 'T))
+           #:attr next (deforestable-info-runtime is)
+           #:attr state #'()
+           #:attr f #`(#,(run-passes #'f-uncompiled))
            )
   )
 
