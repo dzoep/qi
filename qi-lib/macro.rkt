@@ -220,6 +220,7 @@
      #:with runtime-cstream-next (format-id this-syntax
                                             "~a->cstream-next"
                                             #'name)
+     #:with info (format-id this-syntax "~a-info" #'name)
      #'(begin
 
          (define-inline (runtime-cstream-next rarg ...)

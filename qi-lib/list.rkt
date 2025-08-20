@@ -141,7 +141,7 @@
 
 ;; Producers
 
-(define-deforestable #:producer (range [expr low] [expr high] [expr step])
+(define-deforestable #:producer (range [expr low] [expr high] [expr step]) ;; => range->cstream-next
   #'(λ ()
       (r:range low high step))
   (lambda (done skip yield)
@@ -155,7 +155,7 @@
         (next (consing (list low high step)))))
   ())
 
-(define-deforestable #:producer (list->cstream)
+(define-deforestable #:producer (list->cstream) ;; => list->cstream->cstream-next
   #'identity
   (lambda (done skip yield)
     (λ (state)
