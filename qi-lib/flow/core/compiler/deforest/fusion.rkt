@@ -3,21 +3,15 @@
 (provide define-and-register-deforest-pass)
 
 (require (for-syntax racket/base
-                     syntax/parse
-                     "../../../../list.rkt"
-         (submod "../../../../flow/extended/expander.rkt" invoke)
-
-                     )
-         (submod "../../../../flow/extended/expander.rkt" invoke)
+                     syntax/parse)
          syntax/parse
-         racket/syntax
          "syntax.rkt"
          "../../passes.rkt"
          "../../strategy.rkt"
          (for-template "../../passes.rkt"
                        (submod "../../../../flow/extended/expander.rkt" invoke)
-                       "../../../../list.rkt")
-         "../../../../list.rkt"
+                       "../../../../list.rkt"
+                       )
          "../../private/form-property.rkt")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

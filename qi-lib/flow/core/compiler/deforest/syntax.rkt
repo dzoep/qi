@@ -3,7 +3,6 @@
 (provide fst-new
          fsp-new
 
-         fsp-syntax
          fsc-syntax
 
          fsc-foldr
@@ -12,7 +11,6 @@
          fsc-length
          fsc-empty?
          fsc-default
-
          )
 
 (require syntax/parse
@@ -48,36 +46,14 @@
     [((~datum floe) e) #'(qi0->racket e)]
     [((~datum expr) e) #'e]))
 
-(define-syntax-class fsp-range
-  #:attributes (info es^)
-  #:literal-sets (fs-literals)
-  #:datum-literals (range)
-  (pattern (#%deforestable range _info c ...)
-           #:attr info #'_info
-           #:attr es^ #`#,(map deforestable-clause-parser (attribute c))))
-
-(define-syntax-class fsp-default
-  #:datum-literals (list->cstream)
-  #:attributes (state)
-  (pattern list->cstream
-           #:attr contract #'(-> list? any)
-           #:attr name #''list->cstream
-           #:attr state #'()))
-
-(define-syntax-class fsp-syntax
-  (pattern (~or _:fsp-range
-                _:fsp-default)))
-
 (define-syntax-class fsp-new
-  #:attributes (info args contract prepare next name)
+  #:attributes (contract prepare next name)
   #:literal-sets (fs-literals)
   (pattern (#%deforestable _name _info c ...)
            #:do ((define is (syntax-local-value #'_info)))
            #:when (and (deforestable-info? is)
                        (eq? (deforestable-info-kind is) 'P))
            #:with es^ #`#,(map deforestable-clause-parser (attribute c))
-           #:attr info #'_info
-           #:attr args #`#,(map deforestable-clause-parser (attribute c))
            #:attr contract #`(#,@(deforestable-info-rtacontract is))
            #:attr prepare (apply (deforestable-info-prepare is)
                                  (syntax->list #'es^))
@@ -115,16 +91,7 @@
            #:attr next (deforestable-info-runtime is)
            #:attr state #'(n)
            #:attr f #'()
-           )
-    (pattern (#%deforestable name _info any ...)
-           #:do ((define is (syntax-local-value #'_info)))
-           #:when (and (deforestable-info? is)
-                       (eq? (deforestable-info-kind is) 'T))
-           #:attr next (deforestable-info-runtime is)
-           #:attr state #'()
-           #:attr f #`(#,(run-passes #'f-uncompiled))
-           )
-  )
+           ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Fusable Stream Consumers
