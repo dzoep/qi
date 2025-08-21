@@ -9,11 +9,8 @@
                      syntax/srcloc
                      racket/syntax-srcloc
                      "fusion.rkt"
-                     "../../private/form-property.rkt"
-                     "../../../../flow/aux-syntax.rkt")
-         "templates.rkt"
+                     "../../private/form-property.rkt")
          racket/performance-hint
-         racket/match
          racket/contract/base)
 
 ;; "Composes" higher-order functions inline by directly applying them
@@ -42,29 +39,6 @@
     ))
 
 (begin-for-syntax
-
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;; Producers
-
-  #;(define-syntax-class fsp
-    #:attributes (name contract prepare next)
-    (pattern range:fsp-range
-             #:do ((define is (syntax-local-value #'range.info)))
-             #:attr name #''range
-             #:attr contract #`(#,@(deforestable-info-rtacontract is))
-             #:attr prepare (apply (deforestable-info-prepare is) (syntax->list #'range.es^))
-             #:do ((define is (syntax-local-value #'range.info)))
-             #:when (and (deforestable-info? is)
-                         (eq? (deforestable-info-kind is) 'P))
-             #:attr next (deforestable-info-runtime is))
-    (pattern default:fsp-default
-             #:attr name #''list->cstream
-             #:attr contract #'(list?)
-             #:attr prepare #`(lambda (consing next)
-                                 (lambda (lst)
-                                   (next (consing lst))))
-             #:attr next #'list->cstream-next
-             #:attr state #'default.state))
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Consumers
@@ -127,13 +101,6 @@
 ;; Runtime
 
 (begin-encourage-inline
-
-  ;; Producers
-
-  (define-inline (list->cstream-next done skip yield)
-    (λ (state)
-      (cond [(null? state) (done)]
-            [else (yield (car state) (cdr state))])))
 
   ;; Consumers
 
