@@ -70,6 +70,7 @@
                                       (expand-flow
                                        ((make-interned-syntax-introducer 'qi)
                                         #'(list->cstream)))))
+                         ;; #'((#%deforestable list->cstream list->cstream-info) ...)
                          #'(list->cstream f1 f ... cstream->list)))
                       stx)
         #'(thread _0 ... fused _1 ...)]

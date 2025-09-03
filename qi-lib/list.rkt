@@ -151,6 +151,7 @@
              (yield l (cons (+ l s) (cdr state)))]
             [else (done)])))
   #'(lambda (consing next)
+      ;;;
       (lambda ()
         (next (consing (list low high step)))))
   ())
@@ -186,6 +187,33 @@
 
 ;;
 
+#;(define (my-list-ref n)
+    (lambda (next ctx src)
+      (lambda (state)
+        (let loop ([state state]
+                   [countdown n])
+          ((next (λ () ((contract (-> pair? any)
+                                  (λ (v) v)
+                                  'list-ref ctx #f
+                                  src)
+                        '()))
+                 (λ (state) (loop state countdown))
+                 (λ (value state)
+                   (if (zero? countdown)
+                       value
+                       (loop state (sub1 countdown)))))
+           state)))))
+
+#;(define-deforestable #:consumer (list-ref [expr n])
+  #'(λ (vs)
+      (r:list-ref vs n))
+    (my-list-ref n)
+    )
+
+#;(define-deforestable #:consumer (car)
+    #'r:car
+    (my-list-ref 0))
+
 (define-deforestable (foldl [floe f] [expr init])
   #'(λ (vs)
       (r:foldl f init vs)))
@@ -206,7 +234,7 @@
 (define-deforestable cadddr
   #'r:cadddr)
 
-(define-deforestable (list-ref [expr n])
+#;(define-deforestable (list-ref [expr n])
   #'(λ (vs)
       (r:list-ref vs n)))
 

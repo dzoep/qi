@@ -38,6 +38,11 @@
     [(_ state) state]
     ))
 
+(define-syntax (#%host-expression stx)
+  (syntax-parse stx
+    ((_ expr)
+     #'expr)))
+
 (begin-for-syntax
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -74,26 +79,29 @@
        (with-syntax (((rt ...) (reverse (attribute t.state))))
          (attach-form-property
           #`(esc
-             (contract (-> #,@#'p.contract any)
-                       (p.prepare
-                        (lambda (state)
-                          (inline-consing state rt ...))
-                        (#,@#'c.end
-                         (inline-compose1 [t.next t.f
-                                                  '#,(prettify-flow-syntax ctx)
-                                                  '#,(build-source-location-vector
-                                                      (syntax-srcloc ctx))
-                                                  ] ...
-                                          p.next
-                                          )
-                         '#,(prettify-flow-syntax ctx)
-                         '#,(build-source-location-vector
-                             (syntax-srcloc ctx))))
-                       p.name
-                       '#,(prettify-flow-syntax ctx)
-                       #f
-                       '#,(build-source-location-vector
-                           (syntax-srcloc ctx))))))]))
+             (#%host-expression
+              (contract (-> #,@#'p.contract any)
+                        (p.prepare
+                         (lambda (state)
+                           (inline-consing state rt ...))
+                         (#,@#'c.end
+                          (inline-compose1 [t.next t.f
+                                                   '#,(prettify-flow-syntax ctx)
+                                                   '#,(build-source-location-vector
+                                                       (syntax-srcloc ctx))
+                                                   ] ...
+                                           p.next
+                                           )
+                          '#,(prettify-flow-syntax ctx)
+                          '#,(build-source-location-vector
+                              (syntax-srcloc ctx))))
+                        p.name
+                        '#,(prettify-flow-syntax ctx)
+                        #f
+                        '#,(build-source-location-vector
+                            (syntax-srcloc ctx)))
+              )
+             )))]))
 
   )
 
