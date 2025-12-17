@@ -92,10 +92,12 @@
 
 (define-syntax define-qi-syntax-rule
   (syntax-parser
-    [(_ (name . pat) template)
+    [(_ (name . pat) dirs ... tmpl)
      #'(define-dsl-syntax name qi-macro
          (syntax-parser
-           [(_ . pat) #'template]))]))
+           [(_ . pat)
+            dirs ...
+            #'tmpl]))]))
 
 (define-syntax define-qi-syntax-parser
   (syntax-parser

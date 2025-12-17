@@ -12,11 +12,31 @@
          syntax/macro-testing
          "private/util.rkt")
 
-(define-qi-syntax-rule (square flo:expr)
+(define-qi-syntax-rule (square flo)
   (feedback 2 flo))
 
 (define-qi-syntax-rule (pare car-flo cdr-flo)
   (group 1 car-flo cdr-flo))
+
+(define-qi-syntax-rule (ensure-number n:number)
+  (gen n))
+
+(define-qi-syntax-rule (repeat-3 f)
+  #:with g #'(~> f f f)
+  g)
+
+(define-qi-syntax-parser repeat
+  [(_ 2 f)
+   #:with g #'(~> f f)
+   #'g]
+  [(_ 3 f)
+   #:with g #'(~> f f f)
+   #'g])
+
+(define-qi-syntax-parser calc
+  #:datum-literals (plus minus)
+  [(_ plus) #'+]
+  [(_ minus) #'-])
 
 (define-qi-syntax-parser cube
   [(_ flo) #'(feedback 3 flo)])
@@ -54,6 +74,11 @@
     "base"
     (check-equal? ((☯ (square sqr)) 2) 16)
     (check-equal? ((☯ (~> (pare sqr +) ▽)) 3 6 9) (list 9 15))
+    (check-equal? ((☯ (ensure-number 5))) 5 "single-clause macros can use syntax classes")
+    (check-equal? ((☯ (repeat-3 add1)) 5) 8 "single-clause macros can include pattern directives")
+    (check-equal? ((☯ (repeat 2 add1)) 5) 7 "multi-clause macros can include pattern directives")
+    (check-equal? ((☯ (calc plus)) 5 3) 8 "multi-clause macros can include parse options")
+    (check-equal? ((☯ (calc minus)) 5 3) 2 "multi-clause macros can include parse options")
     (check-equal? ((☯ (cube sqr)) 2) 256)
     (check-equal? ((☯ (fanout 5)) 2) 'hello "extensions can override built-in forms")
     (check-equal? ((☯ kazam) 2) 'hello "extensions can add identifier macros"))
