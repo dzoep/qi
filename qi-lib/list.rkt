@@ -17,6 +17,7 @@
          (prefix-in r: racket/base)
          (prefix-in r: racket/list)
          racket/contract/base
+         racket/contract/region
          racket/match)
 
 ;; Transformers
@@ -152,10 +153,11 @@
             [else (done)])))
   #'(lambda (consing next)
       ;;;
-      (define/contract (something low high step)
-        (-> number? number? number?)
-        (next (consing (list low high step))))
-      something)
+      (define/contract (something l h s)
+        (-> number? number? number? any)
+        (next (consing (list l h s))))
+      (lambda ()
+        (something low high step)))
   ())
 
 (define-deforestable #:producer (list->cstream) ;; => list->cstream->cstream-next
@@ -228,26 +230,35 @@
   #'r:car)
 
 (define-qi-syntax-parser car
-  [_:id #'(list-ref 0 'car)])
+  [_:id #'(list-ref 0 #;'car)])
+
+(define-qi-syntax-parser cadr
+  [_:id #'(list-ref 1 #;'cadr)])
+
+(define-qi-syntax-parser caddr
+  [_:id #'(list-ref 2 #;'caddr)])
+
+(define-qi-syntax-parser cadddr
+  [_:id #'(list-ref 3 #;'cadddr)])
 
 (define-qi-syntax-parser list-ref2
   [(_:id n:expr) #'(list-ref n 'list-ref)])
 
-(define-deforestable (list-ref [expr n] [expr sym])
+#;(define-deforestable (list-ref [expr n] [expr sym])
   #'(λ (vs)
       (r:list-ref vs n))
   (lambda (init-countdown name next ctx src)
     (λ (state)
       ...)))
 
-(define-deforestable cadr
-  #'r:cadr)
+;; (define-deforestable cadr
+;;   #'r:cadr)
 
-(define-deforestable caddr
-  #'r:caddr)
+;; (define-deforestable caddr
+;;   #'r:caddr)
 
-(define-deforestable cadddr
-  #'r:cadddr)
+;; (define-deforestable cadddr
+;;   #'r:cadddr)
 
 (define-deforestable (list-ref [expr n])
   #'(λ (vs)
