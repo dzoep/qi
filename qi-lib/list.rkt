@@ -152,8 +152,10 @@
             [else (done)])))
   #'(lambda (consing next)
       ;;;
-      (lambda ()
-        (next (consing (list low high step)))))
+      (define/contract (something low high step)
+        (-> number? number? number?)
+        (next (consing (list low high step))))
+      something)
   ())
 
 (define-deforestable #:producer (list->cstream) ;; => list->cstream->cstream-next
@@ -222,8 +224,21 @@
   #'(λ (vs)
       (r:foldr f init vs)))
 
-(define-deforestable car
+#;(define-deforestable car
   #'r:car)
+
+(define-qi-syntax-parser car
+  [_:id #'(list-ref 0 'car)])
+
+(define-qi-syntax-parser list-ref2
+  [(_:id n:expr) #'(list-ref n 'list-ref)])
+
+(define-deforestable (list-ref [expr n] [expr sym])
+  #'(λ (vs)
+      (r:list-ref vs n))
+  (lambda (init-countdown name next ctx src)
+    (λ (state)
+      ...)))
 
 (define-deforestable cadr
   #'r:cadr)
@@ -234,7 +249,7 @@
 (define-deforestable cadddr
   #'r:cadddr)
 
-#;(define-deforestable (list-ref [expr n])
+(define-deforestable (list-ref [expr n])
   #'(λ (vs)
       (r:list-ref vs n)))
 
