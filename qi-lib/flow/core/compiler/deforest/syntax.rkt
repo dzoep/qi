@@ -126,11 +126,10 @@
 (define-syntax-class fsc-list-ref
   #:attributes (pos name)
   #:literal-sets (fs-literals)
-  #:datum-literals (list-ref)
+  #:datum-literals (list-ref*)
   ;; TODO: need #%host-expression wrapping idx?
-  (pattern (#%deforestable list-ref _info ((~datum expr) idx))
-    #:attr pos #'idx
-    #:attr name #'list-ref))
+  (pattern (#%deforestable list-ref* _info ((~datum expr) idx) ((~datum expr) name))
+    #:attr pos #'idx))
 
 (define-syntax-class fsc-length
   #:literal-sets (fs-literals)

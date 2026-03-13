@@ -55,7 +55,7 @@
     (pattern foldl:fsc-foldl
              #:attr end #'(foldl-cstream-next foldl.op foldl.init))
     (pattern list-ref:fsc-list-ref
-             #:attr end #'(list-ref-cstream-next list-ref.pos 'list-ref.name))
+             #:attr end #'(list-ref-cstream-next list-ref.pos list-ref.name))
     (pattern length:fsc-length
              #:attr end #'(length-cstream-next))
     (pattern empty?:fsc-empty?

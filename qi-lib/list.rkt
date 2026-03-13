@@ -191,33 +191,6 @@
 
 ;;
 
-#;(define (my-list-ref n)
-    (lambda (next ctx src)
-      (lambda (state)
-        (let loop ([state state]
-                   [countdown n])
-          ((next (λ () ((contract (-> pair? any)
-                                  (λ (v) v)
-                                  'list-ref ctx #f
-                                  src)
-                        '()))
-                 (λ (state) (loop state countdown))
-                 (λ (value state)
-                   (if (zero? countdown)
-                       value
-                       (loop state (sub1 countdown)))))
-           state)))))
-
-#;(define-deforestable #:consumer (list-ref [expr n])
-  #'(λ (vs)
-      (r:list-ref vs n))
-    (my-list-ref n)
-    )
-
-#;(define-deforestable #:consumer (car)
-    #'r:car
-    (my-list-ref 0))
-
 (define-deforestable (foldl [floe f] [expr init])
   #'(λ (vs)
       (r:foldl f init vs)))
@@ -226,43 +199,24 @@
   #'(λ (vs)
       (r:foldr f init vs)))
 
-#;(define-deforestable car
-  #'r:car)
-
 (define-qi-syntax-parser car
-  [_:id #'(list-ref 0 #;'car)])
+  [_:id #'(list-ref* 0 'car)])
 
 (define-qi-syntax-parser cadr
-  [_:id #'(list-ref 1 #;'cadr)])
+  [_:id #'(list-ref* 1 'cadr)])
 
 (define-qi-syntax-parser caddr
-  [_:id #'(list-ref 2 #;'caddr)])
+  [_:id #'(list-ref* 2 'caddr)])
 
 (define-qi-syntax-parser cadddr
-  [_:id #'(list-ref 3 #;'cadddr)])
+  [_:id #'(list-ref* 3 'cadddr)])
 
-(define-qi-syntax-parser list-ref2
-  [(_:id n:expr) #'(list-ref n 'list-ref)])
-
-#;(define-deforestable (list-ref [expr n] [expr sym])
-  #'(λ (vs)
-      (r:list-ref vs n))
-  (lambda (init-countdown name next ctx src)
-    (λ (state)
-      ...)))
-
-;; (define-deforestable cadr
-;;   #'r:cadr)
-
-;; (define-deforestable caddr
-;;   #'r:caddr)
-
-;; (define-deforestable cadddr
-;;   #'r:cadddr)
-
-(define-deforestable (list-ref [expr n])
+(define-deforestable (list-ref* [expr n] [expr name])
   #'(λ (vs)
       (r:list-ref vs n)))
+
+(define-qi-syntax-parser list-ref
+  [(_ n:expr) #'(list-ref* n 'list-ref)])
 
 (define-deforestable length
   #'r:length)
