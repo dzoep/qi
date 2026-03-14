@@ -144,7 +144,10 @@
 
 (define-syntax define-deforestable
   (syntax-parser
-    [(_ (name spec ...) codegen)
+    [(_
+      (~or (~and #:transformer transformer-kw)
+           (~and #:consumer consumer-kw))
+      (name spec ...+) codegen (lambda (rarg ...) rbody ...))
      #:with ([_typ arg] ...) #'(spec ...)
      #:with codegen-f #'(lambda (arg ...)
                           ;; var bindings vs pattern bindings
@@ -152,23 +155,6 @@
                           ;; use them as variable bindings, so
                           ;; we use with-syntax to handle them
                           ;; as pattern bindings
-                          (with-syntax ([arg arg] ...)
-                            codegen))
-     #'(begin
-
-         ;; capture the codegen in an instance of
-         ;; the compile time struct
-         (define-syntax info
-           (deforestable-info codegen-f #'#f #f #f #f))
-
-         (define-dsl-syntax name qi-macro
-           (op-transformer #'name #'info #'(op spec ...))))]
-    [(_
-      (~or (~and #:transformer transformer-kw)
-           (~and #:consumer consumer-kw))
-      (name spec ...+) codegen (lambda (rarg ...) rbody ...))
-     #:with ([_typ arg] ...) #'(spec ...)
-     #:with codegen-f #'(lambda (arg ...)
                           (with-syntax ([arg arg] ...)
                             codegen))
      #:with kind (cond ((attribute transformer-kw) #''T)
@@ -221,16 +207,6 @@
 
          (define-dsl-syntax name qi-macro
            (op-transformer #'name #'info #'(op spec ...))))]
-    [(_ name:id codegen)
-     #:with codegen-f #'(lambda () codegen)
-     #'(begin
-
-         ;; capture the codegen in an instance of
-         ;; the compile time struct
-         (define-syntax info
-           (deforestable-info codegen-f #'f #f #f #f))
-         (define-dsl-syntax name qi-macro
-           (op-transformer #'name #'info #'op)))]
     [(_ #:consumer name:id codegen
         (lambda (rarg ...) rbody ...))
      #:with codegen-f #'(lambda () codegen)
