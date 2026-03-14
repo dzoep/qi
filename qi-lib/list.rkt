@@ -10,7 +10,6 @@
 (require (for-syntax racket/base
                      "private/util.rkt")
          syntax/parse/define
-         "flow/extended/expander.rkt"
          (only-in "flow/space.rkt"
                   define-qi-alias)
          "macro.rkt"
@@ -272,3 +271,14 @@
          state)))))
 
 (define-qi-alias null? empty?)
+
+(define-deforestable #:consumer cstream->list
+  #'r:identity
+  (lambda (next ctx src)
+    (λ (state)
+      (let loop ([state state])
+        ((next (λ () null)
+               (λ (state) (loop state))
+               (λ (value state)
+                 (cons value (loop state))))
+         state)))))

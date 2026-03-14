@@ -10,7 +10,6 @@
                      racket/syntax-srcloc
                      "fusion.rkt"
                      "../../private/form-property.rkt")
-         racket/performance-hint
          racket/contract/base)
 
 ;; "Composes" higher-order functions inline by directly applying them
@@ -46,22 +45,12 @@
 (begin-for-syntax
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;; Consumers
-
-  (define-syntax-class fsc
-    #:attributes (end)
-    (pattern default:fsc-default
-             #:attr end #'(cstream-next->list))
-    (pattern new:fsc-new
-             #:attr end #'new.end))
-
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; The pass
 
   ;; Performs deforestation rewrite on the whole syntax tree.
   (define-and-register-deforest-pass (deforest-pass ops ctx)
     (syntax-parse (reverse ops)
-      [(c:fsc
+      [(c:fsc-new
         t:fst-new ...
         p:fsp-new)
        ;; A static runtime contract is placed at the beginning of the
@@ -93,23 +82,5 @@
                             (syntax-srcloc ctx)))
               )
              )))]))
-
-  )
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Runtime
-
-(begin-encourage-inline
-
-  ;; Consumers
-
-  (define-inline (cstream-next->list next ctx src)
-    (λ (state)
-      (let loop ([state state])
-        ((next (λ () null)
-               (λ (state) (loop state))
-               (λ (value state)
-                 (cons value (loop state))))
-         state))))
 
   )

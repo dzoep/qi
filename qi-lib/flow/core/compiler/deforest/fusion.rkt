@@ -22,7 +22,7 @@
 (define-syntax-class non-fusable
   (pattern (~not (~or _:fst-new
                       _:fsp-new
-                      _:fsc-syntax))))
+                      _:fsc-new))))
 
 (define (make-deforest-rewrite generate-fused-operation)
   (lambda (stx)
@@ -32,7 +32,7 @@
                          p:fsp-new
                          ;; There can be zero transformers here:
                          t:fst-new ...
-                         c:fsc-syntax
+                         c:fsc-new
                          _1 ...)
         #:with fused (generate-fused-operation
                       (syntax->list #'(p t ... c))
@@ -40,7 +40,7 @@
         #'(thread _0 ... fused _1 ...)]
        [((~datum thread) _0:non-fusable ...
                          t:fst-new ...+
-                         c:fsc-syntax
+                         c:fsc-new
                          _1 ...)
         #:with fused (generate-fused-operation
                       (syntax->list
@@ -57,7 +57,12 @@
                          t:fst-new ...+
                          _1 ...)
         #:with fused (generate-fused-operation
-                      (syntax->list #'(p t ... cstream->list))
+                      (syntax->list
+                       (with-syntax ((cstream->list
+                                      (expand-flow
+                                       ((make-interned-syntax-introducer 'qi)
+                                        #'cstream->list))))
+                         #'(p t ... cstream->list)))
                       stx)
         #'(thread _0 ... fused _1 ...)]
        [((~datum thread) _0:non-fusable ...
@@ -69,7 +74,11 @@
                        (with-syntax ((list->cstream
                                       (expand-flow
                                        ((make-interned-syntax-introducer 'qi)
-                                        #'(list->cstream)))))
+                                        #'(list->cstream))))
+                                     (cstream->list
+                                      (expand-flow
+                                       ((make-interned-syntax-introducer 'qi)
+                                        #'cstream->list))))
                          ;; #'((#%deforestable list->cstream list->cstream-info) ...)
                          #'(list->cstream f1 f ... cstream->list)))
                       stx)

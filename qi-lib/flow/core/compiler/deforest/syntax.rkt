@@ -2,17 +2,7 @@
 
 (provide fst-new
          fsp-new
-         fsc-new
-
-         fsc-syntax
-
-         fsc-foldr
-         fsc-foldl
-         fsc-list-ref
-         fsc-length
-         fsc-empty?
-         fsc-default
-         )
+         fsc-new)
 
 (require syntax/parse
          "../../passes.rkt"
@@ -20,8 +10,7 @@
          "../../../aux-syntax.rkt"
          (for-template racket/base
                        "../../passes.rkt"
-                       "../../strategy.rkt"
-                       "templates.rkt")
+                       "../../strategy.rkt")
          (for-syntax racket/base
                      syntax/parse))
 
@@ -117,56 +106,3 @@
                        (eq? (deforestable-info-kind is) 'C))
            #:with next (deforestable-info-runtime is)
            #:attr end #'(next arg.expr ...)))
-
-(define-syntax-class fsc-foldr
-  #:attributes (op init)
-  #:literal-sets (fs-literals)
-  #:datum-literals (foldr)
-  (pattern (#%deforestable
-            foldr
-            _info
-            ((~datum floe) op-uncompiled)
-            ((~datum expr) init))
-    #:attr op (run-passes #'op-uncompiled)))
-
-(define-syntax-class fsc-foldl
-  #:attributes (op init)
-  #:literal-sets (fs-literals)
-  #:datum-literals (foldl)
-  (pattern (#%deforestable
-            foldl
-            _info
-            ((~datum floe) op-uncompiled)
-            ((~datum expr) init))
-    #:attr op (run-passes #'op-uncompiled)))
-
-(define-syntax-class fsc-list-ref
-  #:attributes (pos name)
-  #:literal-sets (fs-literals)
-  #:datum-literals (list-ref*)
-  ;; TODO: need #%host-expression wrapping idx?
-  (pattern (#%deforestable list-ref* _info ((~datum expr) idx) ((~datum expr) name))
-    #:attr pos #'idx))
-
-(define-syntax-class fsc-length
-  #:literal-sets (fs-literals)
-  #:datum-literals (length)
-  (pattern (#%deforestable length _info)))
-
-(define-syntax-class fsc-empty?
-  #:literal-sets (fs-literals)
-  #:datum-literals (empty?) ; note: null? expands to empty?
-  (pattern (#%deforestable empty? _info)))
-
-(define-syntax-class fsc-default
-  #:datum-literals (cstream->list)
-  (pattern cstream->list))
-
-(define-syntax-class fsc-syntax
-  (pattern (~or _:fsc-foldr
-                _:fsc-foldl
-                _:fsc-list-ref
-                _:fsc-length
-                _:fsc-empty?
-                _:fsc-default
-                )))
