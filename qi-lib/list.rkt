@@ -189,15 +189,31 @@
           "(range arg ...)"
           "range expects at least one argument")])
 
-;;
+;; Consumers
 
-(define-deforestable (foldl [floe f] [expr init])
+(define-deforestable #:consumer (foldl [floe op] [expr init])
   #'(λ (vs)
-      (r:foldl f init vs)))
+      (r:foldl op init vs))
+  (lambda (op init next ctx src)
+    (lambda (state)
+      (let loop ([acc init] [state state])
+        ((next (λ () acc)
+               (λ (state) (loop acc state))
+               (λ (value state)
+                 (loop (op value acc) state)))
+         state)))))
 
-(define-deforestable (foldr [floe f] [expr init])
+(define-deforestable #:consumer (foldr [floe f] [expr init])
   #'(λ (vs)
-      (r:foldr f init vs)))
+      (r:foldr f init vs))
+  (lambda (op init next ctx src)
+    (lambda (state)
+      (let loop ([state state])
+        ((next (λ () init)
+               (λ (state) (loop state))
+               (λ (value state)
+                 (op value (loop state))))
+         state)))))
 
 (define-qi-syntax-parser car
   [_:id #'(list-ref* 0 'car)])
@@ -211,17 +227,48 @@
 (define-qi-syntax-parser cadddr
   [_:id #'(list-ref* 3 'cadddr)])
 
-(define-deforestable (list-ref* [expr n] [expr name])
+(define-deforestable #:consumer (list-ref* [expr n] [expr name])
   #'(λ (vs)
-      (r:list-ref vs n)))
+      (r:list-ref vs n))
+  (lambda (init-countdown name next ctx src)
+    (λ (state)
+      (let loop ([state state]
+                 [countdown init-countdown])
+        ((next (λ () ((contract (-> pair? any)
+                                (λ (v) v)
+                                name ctx #f
+                                src)
+                      '()))
+               (λ (state) (loop state countdown))
+               (λ (value state)
+                 (if (zero? countdown)
+                     value
+                     (loop state (sub1 countdown)))))
+         state)))))
 
 (define-qi-syntax-parser list-ref
   [(_ n:expr) #'(list-ref* n 'list-ref)])
 
-(define-deforestable length
-  #'r:length)
+(define-deforestable #:consumer length
+  #'r:length
+  (lambda (next ctx src)
+    (λ (state)
+      (let loop ([state state]
+                 [the-length 0])
+        ((next (λ () the-length)
+               (λ (state) (loop state the-length))
+               (λ (value state)
+                 (loop state (add1 the-length))))
+         state)))))
 
-(define-deforestable empty?
-  #'r:empty?)
+(define-deforestable #:consumer empty?
+  #'r:empty?
+  (lambda (next ctx src)
+    (λ (state)
+      (let loop ([state state])
+        ((next (λ () #t)
+               (λ (state) (loop state))
+               (λ (value state) #f))
+         state)))))
 
 (define-qi-alias null? empty?)

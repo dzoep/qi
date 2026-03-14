@@ -2,6 +2,7 @@
 
 (provide fst-new
          fsp-new
+         fsc-new
 
          fsc-syntax
 
@@ -100,6 +101,22 @@
 ;; values from a sequence and create a single value from those.
 ;;
 ;; Prefixed with fsc- for clarity.
+
+(define-syntax-class fsa
+  #:attributes (expr)
+  (pattern ((~datum floe) f-uncompiled)
+           #:attr expr #`#,(run-passes #'f-uncompiled))
+  (pattern ((~datum expr) expr)))
+
+(define-syntax-class fsc-new
+  #:attributes (end)
+  #:literal-sets (fs-literals)
+  (pattern (#%deforestable name _info arg:fsa ...)
+           #:do ((define is (syntax-local-value #'_info)))
+           #:when (and (deforestable-info? is)
+                       (eq? (deforestable-info-kind is) 'C))
+           #:with next (deforestable-info-runtime is)
+           #:attr end #'(next arg.expr ...)))
 
 (define-syntax-class fsc-foldr
   #:attributes (op init)

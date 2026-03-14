@@ -50,19 +50,10 @@
 
   (define-syntax-class fsc
     #:attributes (end)
-    (pattern foldr:fsc-foldr
-             #:attr end #'(foldr-cstream-next foldr.op foldr.init))
-    (pattern foldl:fsc-foldl
-             #:attr end #'(foldl-cstream-next foldl.op foldl.init))
-    (pattern list-ref:fsc-list-ref
-             #:attr end #'(list-ref-cstream-next list-ref.pos list-ref.name))
-    (pattern length:fsc-length
-             #:attr end #'(length-cstream-next))
-    (pattern empty?:fsc-empty?
-             #:attr end #'(empty?-cstream-next))
     (pattern default:fsc-default
              #:attr end #'(cstream-next->list))
-    )
+    (pattern new:fsc-new
+             #:attr end #'new.end))
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; The pass
@@ -119,58 +110,6 @@
                (λ (state) (loop state))
                (λ (value state)
                  (cons value (loop state))))
-         state))))
-
-  (define-inline (foldr-cstream-next op init next ctx src)
-    (λ (state)
-      (let loop ([state state])
-        ((next (λ () init)
-               (λ (state) (loop state))
-               (λ (value state)
-                 (op value (loop state))))
-         state))))
-
-  (define-inline (foldl-cstream-next op init next ctx src)
-    (λ (state)
-      (let loop ([acc init] [state state])
-        ((next (λ () acc)
-               (λ (state) (loop acc state))
-               (λ (value state)
-                 (loop (op value acc) state)))
-         state))))
-
-  (define-inline (list-ref-cstream-next init-countdown name next ctx src)
-    (λ (state)
-      (let loop ([state state]
-                 [countdown init-countdown])
-        ((next (λ () ((contract (-> pair? any)
-                                (λ (v) v)
-                                name ctx #f
-                                src)
-                      '()))
-               (λ (state) (loop state countdown))
-               (λ (value state)
-                 (if (zero? countdown)
-                     value
-                     (loop state (sub1 countdown)))))
-         state))))
-
-  (define-inline (length-cstream-next next ctx src)
-    (λ (state)
-      (let loop ([state state]
-                 [the-length 0])
-        ((next (λ () the-length)
-               (λ (state) (loop state the-length))
-               (λ (value state)
-                 (loop state (add1 the-length))))
-         state))))
-
-  (define-inline (empty?-cstream-next next ctx src)
-    (λ (state)
-      (let loop ([state state])
-        ((next (λ () #t)
-               (λ (state) (loop state))
-               (λ (value state) #f))
          state))))
 
   )

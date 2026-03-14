@@ -169,11 +169,6 @@
       (name spec ...+) codegen (lambda (rarg ...) rbody ...))
      #:with ([_typ arg] ...) #'(spec ...)
      #:with codegen-f #'(lambda (arg ...)
-                          ;; var bindings vs pattern bindings
-                          ;; arg are syntax objects but we can't
-                          ;; use them as variable bindings, so
-                          ;; we use with-syntax to handle them
-                          ;; as pattern bindings
                           (with-syntax ([arg arg] ...)
                             codegen))
      #:with kind (cond ((attribute transformer-kw) #''T)
@@ -203,19 +198,9 @@
       )
      #:with ([_typ arg] ...) #'(spec ...)
      #:with prepare-f #'(lambda (arg ...)
-                          ;; var bindings vs pattern bindings
-                          ;; arg are syntax objects but we can't
-                          ;; use them as variable bindings, so
-                          ;; we use with-syntax to handle them
-                          ;; as pattern bindings
                           (with-syntax ([arg arg] ...)
                             prepare))
      #:with codegen-f #'(lambda (arg ...)
-                          ;; var bindings vs pattern bindings
-                          ;; arg are syntax objects but we can't
-                          ;; use them as variable bindings, so
-                          ;; we use with-syntax to handle them
-                          ;; as pattern bindings
                           (with-syntax ([arg arg] ...)
                             codegen))
      #:with kind  #''P
@@ -244,5 +229,18 @@
          ;; the compile time struct
          (define-syntax info
            (deforestable-info codegen-f #'f #f #f #f))
+         (define-dsl-syntax name qi-macro
+           (op-transformer #'name #'info #'op)))]
+    [(_ #:consumer name:id codegen
+        (lambda (rarg ...) rbody ...))
+     #:with codegen-f #'(lambda () codegen)
+     #:with runtime-cstream-next (format-id this-syntax
+                                            "~a-cstream-next"
+                                            #'name)
+     #'(begin
+         (define-inline (runtime-cstream-next rarg ...)
+           rbody ...)
+         (define-syntax info
+           (deforestable-info codegen-f #'runtime-cstream-next 'C #f #f))
          (define-dsl-syntax name qi-macro
            (op-transformer #'name #'info #'op)))]))
