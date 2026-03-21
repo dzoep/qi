@@ -468,3 +468,17 @@
                      (loop state curarg value)
                      (loop state bestarg bestval))))
          state)))))
+
+(define-deforestable #:consumer reverse
+  #:fallback
+  (λ (vs)
+    (r:reverse vs))
+  #:impl
+  (lambda (next ctx src)
+    (lambda (state)
+      (let loop ([acc '()] [state state])
+        ((next (λ () acc)
+               (λ (state) (loop acc state))
+               (λ (value state)
+                 (loop (cons value acc) state)))
+         state)))))
