@@ -373,7 +373,18 @@
                          (assq 49)))
                   '((1 one) (2 two) (3 three) (4 four) (5 five) (6 six) (7 seven) (8 eight) (9 nine)))
                  '(49 seven))
-                         
+    #;(test-equal? "count with predicate"
+                   ((☯ (~> (range 20)
+                         (filter odd?)
+                         (map sqr)
+                         (count (lambda (v) (> v 10))))))
+                   10)
+    (test-equal? "index-of"
+                 ((☯ (~> (range 20)
+                         (filter odd?)
+                         (map sqr)
+                         (index-of 25))))
+                 2)
     )))
 
 (module+ main

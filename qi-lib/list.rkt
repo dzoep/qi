@@ -341,3 +341,27 @@
 
 (define-qi-syntax-parser assq
   [(_ v:expr) #'(assoc* v eq?)])
+
+#;(define-qi-syntax-parser count
+  [(_ proc) #'(~> (filter-map proc) length)])
+
+(define-deforestable #:consumer (index-of* [expr v] [floe is-equal?])
+  #:fallback
+  (λ (vs)
+    (index-of vs v is-equal?))
+  #:impl
+  (lambda (v is-equal? next ctx src)
+    (lambda (state)
+      (let loop ((state state)
+                 (idx 0))
+        ((next (λ () #f)
+               (λ (state) (loop state idx))
+               (λ (value state)
+                 (if (is-equal? value v)
+                     idx
+                     (loop state (add1 idx)))))
+         state)))))
+
+(define-qi-syntax-parser index-of
+  [(_ v:expr) #'(index-of* v equal?)]
+  [(_ v:expr is-equal?) #'(index-of* v is-equal?)])
