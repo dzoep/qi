@@ -408,6 +408,12 @@
                          (filter even?)
                          (index-where (lambda (v) (> v 35))))))
                  3)
+    (test-equal? "findf"
+                 ((☯ (~> (range 20)
+                         (map sqr)
+                         (filter even?)
+                         (findf (lambda (v) (> v 35))))))
+                 36)
     )))
 
 (module+ main

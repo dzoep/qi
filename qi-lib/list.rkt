@@ -412,3 +412,19 @@
                      idx
                      (loop state (add1 idx)))))
          state)))))
+
+(define-deforestable #:consumer (findf [floe proc])
+  #:fallback
+  (λ (vs)
+    (findf vs proc))
+  #:impl
+  (lambda (proc next ctx src)
+    (lambda (state)
+      (let loop ((state state))
+        ((next (λ () #f)
+               (λ (state) (loop state))
+               (λ (value state)
+                 (if (proc value)
+                     value
+                     (loop state))))
+         state)))))
