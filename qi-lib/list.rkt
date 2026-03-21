@@ -22,8 +22,10 @@
 ;; Transformers
 
 (define-deforestable #:transformer (map [floe f])
-  #'(lambda (vs)  ; single list arg
+  #:fallback
+  (lambda (vs)  ; single list arg      
       (r:map f vs))
+  #:impl
   (lambda (f next ctx src)
     (λ (done skip yield)
       (next done
@@ -32,8 +34,10 @@
               (yield (f value) state))))))
 
 (define-deforestable #:transformer (filter [floe f])
-  #'(λ (vs)
+  #:fallback
+  (λ (vs)
       (r:filter f vs))
+  #:impl
   (lambda (f next ctx src)
     (λ (done skip yield)
       (next done
@@ -44,8 +48,10 @@
                   (skip state)))))))
 
 (define-deforestable #:transformer (filter-map [floe f])
-  #'(λ (vs)
+  #:fallback
+  (λ (vs)
       (r:filter-map f vs))
+  #:impl
   (lambda (f next ctx src)
     (λ (done skip yield)
       (next done
@@ -57,8 +63,10 @@
                     (skip state))))))))
 
 (define-deforestable #:transformer (take [expr n])
-  #'(λ (vs)
+  #:fallback
+  (λ (vs)
       (r:take vs n))
+  #:impl
   (lambda (next ctx src)
     (λ (done skip yield)
       (λ (take-state)
@@ -81,8 +89,10 @@
              state))))))
 
 (define-deforestable #:transformer (filter-not [floe f])
-  #'(lambda (vs)
+  #:fallback
+  (lambda (vs)
       (r:filter-not f vs))
+  #:impl
   (lambda (f next ctx src)
     (λ (done skip yield)
       (next done
@@ -93,8 +103,10 @@
                   (yield value state)))))))
 
 (define-deforestable #:transformer (list-tail [expr n])
-  #'(lambda (vs)
+  #:fallback
+  (lambda (vs)
       (r:list-tail vs n))
+  #:impl
   (lambda (next ctx src)
     (λ (done skip yield)
       (λ (drop-state)
@@ -191,8 +203,10 @@
 ;; Consumers
 
 (define-deforestable #:consumer (foldl [floe op] [expr init])
-  #'(λ (vs)
+  #:fallback
+  (λ (vs)
       (r:foldl op init vs))
+  #:impl
   (lambda (op init next ctx src)
     (lambda (state)
       (let loop ([acc init] [state state])
@@ -203,8 +217,10 @@
          state)))))
 
 (define-deforestable #:consumer (foldr [floe f] [expr init])
-  #'(λ (vs)
+  #:fallback
+  (λ (vs)
       (r:foldr f init vs))
+  #:impl
   (lambda (op init next ctx src)
     (lambda (state)
       (let loop ([state state])
@@ -227,8 +243,10 @@
   [_:id #'(list-ref* 3 'cadddr)])
 
 (define-deforestable #:consumer (list-ref* [expr n] [expr name])
-  #'(λ (vs)
+  #:fallback
+  (λ (vs)
       (r:list-ref vs n))
+  #:impl
   (lambda (init-countdown name next ctx src)
     (λ (state)
       (let loop ([state state]
@@ -249,7 +267,9 @@
   [(_ n:expr) #'(list-ref* n 'list-ref)])
 
 (define-deforestable #:consumer length
-  #'r:length
+  #:fallback
+  r:length
+  #:impl
   (lambda (next ctx src)
     (λ (state)
       (let loop ([state state]
@@ -261,7 +281,9 @@
          state)))))
 
 (define-deforestable #:consumer empty?
-  #'r:empty?
+  #:fallback
+  r:empty?
+  #:impl
   (lambda (next ctx src)
     (λ (state)
       (let loop ([state state])
@@ -273,7 +295,9 @@
 (define-qi-alias null? empty?)
 
 (define-deforestable #:consumer cstream->list
-  #'r:identity
+  #:fallback
+  r:identity
+  #:impl
   (lambda (next ctx src)
     (λ (state)
       (let loop ([state state])

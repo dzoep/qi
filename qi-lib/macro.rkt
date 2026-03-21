@@ -159,9 +159,12 @@
     [(_
       (~or (~and #:transformer transformer-kw)
            (~and #:consumer consumer-kw))
-      #;(name spec ...+)
       df:dffmls
-      codegen (lambda (rarg ...) rbody ...))
+      (~alt
+       (~optional (~seq #:fallback codegen))
+       (~optional (~seq #:impl (lambda (rarg ...) rbody ...)))
+       ) ...
+      )
      #:with (spec ...) #'df.spec
      #:with (arg ...) #'df.arg
      #:with op-spec (if (attribute df.args?)
@@ -174,7 +177,7 @@
                           ;; we use with-syntax to handle them
                           ;; as pattern bindings
                           (with-syntax ([arg arg] ...)
-                            codegen))
+                            #'codegen))
      #:with kind (cond ((attribute transformer-kw) #''T)
                        ((attribute consumer-kw) #''C))
      #:with runtime-cstream-next (format-id this-syntax
