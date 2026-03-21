@@ -142,13 +142,31 @@
          ;; so no special error handling needed here
          [_:id #`(#%deforestable #,name #,info)])])))
 
+(begin-for-syntax
+  (define-syntax-class dffmls
+    #:attributes (name spec arg args?)
+    (pattern name:id
+             #:attr spec #'()
+             #:attr arg #'()
+             #:attr args? #f)
+    (pattern (name:id (_typ _arg) ...+)
+             #:attr spec #'((_typ _arg) ...)
+             #:attr arg #'(_arg ...)
+             #:attr args? #t)))
+
 (define-syntax define-deforestable
   (syntax-parser
     [(_
       (~or (~and #:transformer transformer-kw)
            (~and #:consumer consumer-kw))
-      (name spec ...+) codegen (lambda (rarg ...) rbody ...))
-     #:with ([_typ arg] ...) #'(spec ...)
+      #;(name spec ...+)
+      df:dffmls
+      codegen (lambda (rarg ...) rbody ...))
+     #:with (spec ...) #'df.spec
+     #:with (arg ...) #'df.arg
+     #:with op-spec (if (attribute df.args?)
+                       #'(op spec ...)
+                       #'op)
      #:with codegen-f #'(lambda (arg ...)
                           ;; var bindings vs pattern bindings
                           ;; arg are syntax objects but we can't
@@ -161,7 +179,7 @@
                        ((attribute consumer-kw) #''C))
      #:with runtime-cstream-next (format-id this-syntax
                                             "~a-cstream-next"
-                                            #'name)
+                                            #'df.name)
      #'(begin
 
          (define-inline (runtime-cstream-next rarg ...)
@@ -172,8 +190,8 @@
          (define-syntax info
            (deforestable-info codegen-f #'runtime-cstream-next kind #f #f))
 
-         (define-dsl-syntax name qi-macro
-           (op-transformer #'name #'info #'(op spec ...))))]
+         (define-dsl-syntax df.name qi-macro
+           (op-transformer #'df.name #'info #'op-spec)))]
     [(_
       #:producer
       (name spec ...)
@@ -206,17 +224,4 @@
              codegen-f #'runtime-cstream-next kind prepare-f #'(rtacontract ...)))
 
          (define-dsl-syntax name qi-macro
-           (op-transformer #'name #'info #'(op spec ...))))]
-    [(_ #:consumer name:id codegen
-        (lambda (rarg ...) rbody ...))
-     #:with codegen-f #'(lambda () codegen)
-     #:with runtime-cstream-next (format-id this-syntax
-                                            "~a-cstream-next"
-                                            #'name)
-     #'(begin
-         (define-inline (runtime-cstream-next rarg ...)
-           rbody ...)
-         (define-syntax info
-           (deforestable-info codegen-f #'runtime-cstream-next 'C #f #f))
-         (define-dsl-syntax name qi-macro
-           (op-transformer #'name #'info #'op)))]))
+           (op-transformer #'name #'info #'(op spec ...))))]))
