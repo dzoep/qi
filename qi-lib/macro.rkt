@@ -158,13 +158,25 @@
   (syntax-parser
     [(_
       (~or (~and #:transformer transformer-kw)
-           (~and #:consumer consumer-kw))
+           (~and #:consumer consumer-kw)
+           (~and #:producer producer-kw))
       df:dffmls
       (~alt
        (~optional (~seq #:fallback codegen))
        (~optional (~seq #:impl (lambda (rarg ...) rbody ...)))
+       (~optional (~seq #:prepare prepare))
+       (~optional (~seq #:contracts (rtacontract ...)))
        ) ...
       )
+     #:fail-when (and (or (attribute transformer-kw)
+                          (attribute consumer-kw))
+                      (attribute prepare)
+                      (attribute rtacontract))
+     "transformers and consumers must not specify prepare and contracts"
+     #:fail-when (and (attribute producer-kw)
+                      (not (and (attribute prepare)
+                                (attribute rtacontract))))
+     "producers must specify prepare and contracts"
      #:with (spec ...) #'df.spec
      #:with (arg ...) #'df.arg
      #:with op-spec (if (attribute df.args?)
@@ -178,11 +190,20 @@
                           ;; as pattern bindings
                           (with-syntax ([arg arg] ...)
                             #'codegen))
+     #:with prepare-f (if (attribute producer-kw)
+                          #'(lambda (arg ...)
+                              (with-syntax ([arg arg] ...)
+                                prepare))
+                          #'#f)
      #:with kind (cond ((attribute transformer-kw) #''T)
-                       ((attribute consumer-kw) #''C))
+                       ((attribute consumer-kw) #''C)
+                       ((attribute producer-kw) #''P))
      #:with runtime-cstream-next (format-id this-syntax
                                             "~a-cstream-next"
                                             #'df.name)
+     #:with contracts (if (attribute producer-kw)
+                          #'#'(rtacontract ...)
+                          #'#f)
      #'(begin
 
          (define-inline (runtime-cstream-next rarg ...)
@@ -191,40 +212,7 @@
          ;; capture the codegen in an instance of
          ;; the compile time struct
          (define-syntax info
-           (deforestable-info codegen-f #'runtime-cstream-next kind #f #f))
+           (deforestable-info codegen-f #'runtime-cstream-next kind prepare-f contracts))
 
          (define-dsl-syntax df.name qi-macro
-           (op-transformer #'df.name #'info #'op-spec)))]
-    [(_
-      #:producer
-      (name spec ...)
-      codegen ;; fallback
-      ((~datum lambda) (rarg ...) rbody ...) ;; CPS producer
-      prepare
-      (rtacontract ...)
-      )
-     #:with ([_typ arg] ...) #'(spec ...)
-     #:with prepare-f #'(lambda (arg ...)
-                          (with-syntax ([arg arg] ...)
-                            prepare))
-     #:with codegen-f #'(lambda (arg ...)
-                          (with-syntax ([arg arg] ...)
-                            codegen))
-     #:with kind  #''P
-     #:with runtime-cstream-next (format-id this-syntax
-                                            "~a->cstream-next"
-                                            #'name)
-     #:with info (format-id this-syntax "~a-info" #'name)
-     #'(begin
-
-         (define-inline (runtime-cstream-next rarg ...)
-           rbody ...)
-
-         ;; capture the codegen in an instance of
-         ;; the compile time struct
-         (define-syntax info
-           (deforestable-info
-             codegen-f #'runtime-cstream-next kind prepare-f #'(rtacontract ...)))
-
-         (define-dsl-syntax name qi-macro
-           (op-transformer #'name #'info #'(op spec ...))))]))
+           (op-transformer #'df.name #'info #'op-spec)))]))

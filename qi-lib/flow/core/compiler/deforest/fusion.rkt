@@ -47,7 +47,7 @@
                        (with-syntax ((list->cstream
                                       (expand-flow
                                        ((make-interned-syntax-introducer 'qi)
-                                        #'(list->cstream)))))
+                                        #'list->cstream))))
                          #'(list->cstream t ... c)))
                       stx)
         #'(thread _0 ... fused _1 ...)]
@@ -74,7 +74,7 @@
                        (with-syntax ((list->cstream
                                       (expand-flow
                                        ((make-interned-syntax-introducer 'qi)
-                                        #'(list->cstream))))
+                                        #'list->cstream)))
                                      (cstream->list
                                       (expand-flow
                                        ((make-interned-syntax-introducer 'qi)

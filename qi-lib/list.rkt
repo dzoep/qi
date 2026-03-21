@@ -154,14 +154,17 @@
 ;; Producers
 
 (define-deforestable #:producer (range [expr low] [expr high] [expr step]) ;; => range->cstream-next
-  #'(λ ()
-      (r:range low high step))
+  #:fallback
+  (λ ()
+    (r:range low high step))
+  #:impl
   (lambda (done skip yield)
     (λ (state)
       (match-define (list l h s) state)
       (cond [(< l h)
              (yield l (cons (+ l s) (cdr state)))]
             [else (done)])))
+  #:prepare
   #'(lambda (consing next)
       ;;;
       (define/contract (something l h s)
@@ -169,17 +172,22 @@
         (next (consing (list l h s))))
       (lambda ()
         (something low high step)))
+  #:contracts
   ())
 
-(define-deforestable #:producer (list->cstream) ;; => list->cstream->cstream-next
-  #'identity
+(define-deforestable #:producer list->cstream ;; => list->cstream->cstream-next
+  #:fallback
+  identity
+  #:impl
   (lambda (done skip yield)
     (λ (state)
       (cond [(null? state) (done)]
             [else (yield (car state) (cdr state))])))
+  #:prepare
   #'(lambda (consing next)
       (lambda (lst)
         (next (consing lst))))
+  #:contracts
   (list?))
 
 ;; We'd like to indicate multiple surface variants for `range` that
