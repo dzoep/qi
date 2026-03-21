@@ -342,6 +342,22 @@
 (define-qi-syntax-parser assq
   [(_ v:expr) #'(assoc* v eq?)])
 
+(define-deforestable #:consumer (assf [floe pred?])
+  #:fallback
+  (λ (vs)
+    (assf pred? vs))
+  #:impl
+  (lambda (pred? next ctx src)
+    (λ (state)
+      (let loop ((state state))
+        ((next (λ () #f)
+               (λ (state) (loop state))
+               (λ (value state)
+                 (if (pred? (car value))
+                     value
+                     (loop state))))
+         state)))))
+
 #;(define-qi-syntax-parser count
   [(_ proc) #'(~> (filter-map proc) length)])
 

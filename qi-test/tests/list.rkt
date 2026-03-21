@@ -385,6 +385,12 @@
                          (map sqr)
                          (index-of 25))))
                  2)
+    (test-equal? "assf"
+                 ((☯ (~> (map (lambda (v) (cons (sqr (car v)) (cdr v))))
+                         (filter (lambda (v) (odd? (car v))))
+                         (assf (lambda (v) (> v 2)))))
+                  '((1 one) (2 two) (3 three) (4 four) (5 five) (6 six) (7 seven) (8 eight) (9 nine)))
+                 '(9 three))
     )))
 
 (module+ main
