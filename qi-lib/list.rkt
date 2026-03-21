@@ -300,6 +300,20 @@
 
 (define-qi-alias null? empty?)
 
+(define-deforestable #:consumer pair?
+  #:fallback
+  r:pair?
+  #:impl
+  (lambda (next ctx src)
+    (λ (state)
+      (let loop ([state state])
+        ((next (λ () #f)
+               (λ (state) (loop state))
+               (λ (value state) #t))
+         state)))))
+
+(define-qi-alias cons? pair?)
+
 (define-deforestable #:consumer cstream->list
   #:fallback
   r:identity

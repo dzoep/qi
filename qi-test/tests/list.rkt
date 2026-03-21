@@ -391,6 +391,17 @@
                          (assf (lambda (v) (> v 2)))))
                   '((1 one) (2 two) (3 three) (4 four) (5 five) (6 six) (7 seven) (8 eight) (9 nine)))
                  '(9 three))
+    (test-false "not a pair?"
+                ((☯ (~> (range 20)
+                        (map sqr)
+                        (filter even?)
+                        (filter odd?)
+                        pair?))))
+    (test-true "a pair?"
+               ((☯ (~> (range 20)
+                        (map sqr)
+                        (filter even?)
+                        pair?))))
     )))
 
 (module+ main
