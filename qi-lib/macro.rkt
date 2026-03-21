@@ -163,9 +163,10 @@
       df:dffmls
       (~alt
        (~optional (~seq #:fallback codegen))
-       (~optional (~seq #:impl (lambda (rarg ...) rbody ...)))
+       (~optional (~seq #:impl ((~literal lambda) (rarg ...) rbody ...)))
        (~optional (~seq #:prepare prepare))
-       (~optional (~seq #:contracts (rtacontract ...)))
+       (~optional (~seq #:contracts (rtacontract ...))
+                  #:defaults (((rtacontract 1) '())))
        ) ...
       )
      #:fail-when (and (or (attribute transformer-kw)
@@ -174,8 +175,7 @@
                       (attribute rtacontract))
      "transformers and consumers must not specify prepare and contracts"
      #:fail-when (and (attribute producer-kw)
-                      (not (and (attribute prepare)
-                                (attribute rtacontract))))
+                      (not (attribute prepare)))
      "producers must specify prepare and contracts"
      #:with (spec ...) #'df.spec
      #:with (arg ...) #'df.arg
@@ -193,7 +193,7 @@
      #:with prepare-f (if (attribute producer-kw)
                           #'(lambda (arg ...)
                               (with-syntax ([arg arg] ...)
-                                prepare))
+                                #'prepare))
                           #'#f)
      #:with kind (cond ((attribute transformer-kw) #''T)
                        ((attribute consumer-kw) #''C)

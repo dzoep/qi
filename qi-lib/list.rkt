@@ -165,15 +165,13 @@
              (yield l (cons (+ l s) (cdr state)))]
             [else (done)])))
   #:prepare
-  #'(lambda (consing next)
+  (lambda (consing next)
       ;;;
       (define/contract (something l h s)
         (-> number? number? number? any)
         (next (consing (list l h s))))
       (lambda ()
-        (something low high step)))
-  #:contracts
-  ())
+        (something low high step))))
 
 (define-deforestable #:producer list->cstream ;; => list->cstream->cstream-next
   #:fallback
@@ -184,7 +182,7 @@
       (cond [(null? state) (done)]
             [else (yield (car state) (cdr state))])))
   #:prepare
-  #'(lambda (consing next)
+  (lambda (consing next)
       (lambda (lst)
         (next (consing lst))))
   #:contracts
