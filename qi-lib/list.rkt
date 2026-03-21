@@ -395,3 +395,20 @@
 (define-qi-syntax-parser index-of
   [(_ v:expr) #'(index-of* v equal?)]
   [(_ v:expr is-equal?) #'(index-of* v is-equal?)])
+
+(define-deforestable #:consumer (index-where [floe proc])
+  #:fallback
+  (λ (vs)
+    (index-where vs proc))
+  #:impl
+  (lambda (proc next ctx src)
+    (lambda (state)
+      (let loop ((state state)
+                 (idx 0))
+        ((next (λ () #f)
+               (λ (state) (loop state idx))
+               (λ (value state)
+                 (if (proc value)
+                     idx
+                     (loop state (add1 idx)))))
+         state)))))

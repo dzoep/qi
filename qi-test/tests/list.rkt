@@ -402,6 +402,12 @@
                         (map sqr)
                         (filter even?)
                         pair?))))
+    (test-equal? "index-where"
+                 ((☯ (~> (range 20)
+                         (map sqr)
+                         (filter even?)
+                         (index-where (lambda (v) (> v 35))))))
+                 3)
     )))
 
 (module+ main
