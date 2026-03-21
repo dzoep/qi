@@ -428,3 +428,43 @@
                      value
                      (loop state))))
          state)))))
+
+(define-deforestable #:consumer (argmin [floe proc])
+  #:fallback
+  (λ (vs)
+    (argmin proc vs))
+  #:impl
+  (lambda (proc next ctx src)
+    (lambda (state)
+      (let loop ((state state)
+                 (bestarg #f)
+                 (bestval #f))
+        ((next (λ () bestval)
+               (λ (state) (loop state bestarg bestval))
+               (λ (value state)
+                 (define curarg (proc value))
+                 (if (or (not bestarg)
+                         (< curarg bestarg))
+                     (loop state curarg value)
+                     (loop state bestarg bestval))))
+         state)))))
+
+(define-deforestable #:consumer (argmax [floe proc])
+  #:fallback
+  (λ (vs)
+    (argmax proc vs))
+  #:impl
+  (lambda (proc next ctx src)
+    (lambda (state)
+      (let loop ((state state)
+                 (bestarg #f)
+                 (bestval #f))
+        ((next (λ () bestval)
+               (λ (state) (loop state bestarg bestval))
+               (λ (value state)
+                 (define curarg (proc value))
+                 (if (or (not bestarg)
+                         (> curarg bestarg))
+                     (loop state curarg value)
+                     (loop state bestarg bestval))))
+         state)))))

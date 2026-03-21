@@ -414,6 +414,18 @@
                          (filter even?)
                          (findf (lambda (v) (> v 35))))))
                  36)
+    (test-equal? "argmin"
+                 ((☯ (~> (map (lambda (v) (cons (sqr (car v)) (cdr v))))
+                         (filter (lambda (v) (odd? (car v))))
+                         (argmin car)))
+                  '((4 four) (5 five) (6 six) (7 seven) (8 eight) (1 one) (2 two) (3 three) (9 nine)))
+                 '(1 one))
+    (test-equal? "argmax"
+                 ((☯ (~> (map (lambda (v) (cons (sqr (car v)) (cdr v))))
+                         (filter (lambda (v) (odd? (car v))))
+                         (argmax car)))
+                  '((4 four) (5 five) (6 six) (7 seven) (8 eight) (1 one) (2 two) (3 three) (9 nine)))
+                 '(81 nine))
     )))
 
 (module+ main
