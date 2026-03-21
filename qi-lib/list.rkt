@@ -312,3 +312,32 @@
                (λ (value state)
                  (cons value (loop state))))
          state)))))
+
+(define-deforestable #:consumer (assoc* [expr v] [floe is-equal?])
+  #:fallback
+  (λ (vs)
+    (assoc v vs is-equal?))
+  #:impl
+  (lambda (v is-equal? next ctx src)
+    (λ (state)
+      (let loop ((state state))
+        ((next (λ () #f)
+               (λ (state) (loop state))
+               (λ (value state)
+                 (if (is-equal? (car value) v)
+                     value
+                     (loop state))))
+         state)))))
+
+(define-qi-syntax-parser assoc
+  [(_ v:expr) #'(assoc* v equal?)]
+  [(_ v:expr is-equal?) #'(assoc* v is-equal?)])
+
+(define-qi-syntax-parser assw
+  [(_ v:expr) #'(assoc* v equal-always?)])
+
+(define-qi-syntax-parser assv
+  [(_ v:expr) #'(assoc* v eqv?)])
+
+(define-qi-syntax-parser assq
+  [(_ v:expr) #'(assoc* v eq?)])

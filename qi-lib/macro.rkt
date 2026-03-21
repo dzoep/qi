@@ -145,6 +145,7 @@
 (begin-for-syntax
   (define-syntax-class dffmls
     #:attributes (name spec arg args?)
+    #:description "deforestable formals"
     (pattern name:id
              #:attr spec #'()
              #:attr arg #'()
@@ -169,6 +170,9 @@
                   #:defaults (((rtacontract 1) '())))
        ) ...
       )
+     #:fail-when (not (and (attribute codegen)
+                           (attribute rbody)))
+     "fallback and implementation are mandatory"
      #:fail-when (and (or (attribute transformer-kw)
                           (attribute consumer-kw))
                       (attribute prepare)
@@ -176,7 +180,7 @@
      "transformers and consumers must not specify prepare and contracts"
      #:fail-when (and (attribute producer-kw)
                       (not (attribute prepare)))
-     "producers must specify prepare and contracts"
+     "producers must specify prepare"
      #:with (spec ...) #'df.spec
      #:with (arg ...) #'df.arg
      #:with op-spec (if (attribute df.args?)
