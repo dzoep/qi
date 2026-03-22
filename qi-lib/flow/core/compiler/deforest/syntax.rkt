@@ -81,6 +81,14 @@
            #:attr next (deforestable-info-runtime is)
            #:attr state #'(n)
            #:attr f #'()
+           )
+  (pattern (#%deforestable name _info ((~datum expr) n) ((~datum floe) f-uncompiled))
+           #:do ((define is (syntax-local-value #'_info)))
+           #:when (and (deforestable-info? is)
+                       (eq? (deforestable-info-kind is) 'T))
+           #:attr next (deforestable-info-runtime is)
+           #:attr state #'(n)
+           #:attr f #`(#,(run-passes #'f-uncompiled))
            ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

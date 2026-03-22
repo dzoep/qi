@@ -151,6 +151,47 @@
 (define-qi-syntax-parser cdddddr
   [_:id #'(list-tail 5)])
 
+(define remove/done (gensym))
+
+(define-deforestable #:transformer (remove/ [expr v] [floe proc])
+  #:fallback
+  (λ (vs)
+    (r:remove v vs proc))
+  #:impl
+  (lambda (proc next ctx src)
+    (λ (done skip yield)
+      (λ (state0)
+        (define v (car state0))
+        (define state (cdr state0))
+        (if (eq? v remove/done)
+            ((next done
+                   (λ (state1)
+                     (skip (cons v state1)))
+                   (λ (value state1)
+                     (yield value (cons v state1))))
+             state)
+            ((next done
+                   (λ (state1)
+                     (skip (cons v state1)))
+                   (λ (value state1)
+                     (if (proc v value)
+                         (skip (cons remove/done state1))
+                         (yield value (cons v state1)))))
+             state))))))
+
+(define-qi-syntax-parser remove
+  [(_:id v:expr) #'(remove/ v equal?)]
+  [(_:id v:expr proc) #'(remove/ v proc)])
+
+(define-qi-syntax-parser remq
+  [(_:id v:expr) #'(remove/ v eq?)])
+
+(define-qi-syntax-parser remv
+  [(_:id v:expr) #'(remove/ v eqv?)])
+
+(define-qi-syntax-parser remw
+  [(_:id v:expr) #'(remove/ v equal-always?)])
+
 ;; Producers
 
 (define-deforestable #:producer (range [expr low] [expr high] [expr step]) ;; => range->cstream-next
