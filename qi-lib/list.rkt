@@ -151,7 +151,7 @@
 (define-qi-syntax-parser cdddddr
   [_:id #'(list-tail 5)])
 
-(define remove/done (gensym))
+(define deforest/done (gensym))
 
 (define-deforestable #:transformer (remove/ [expr v] [floe proc])
   #:fallback
@@ -163,7 +163,7 @@
       (λ (state0)
         (define v (car state0))
         (define state (cdr state0))
-        (if (eq? v remove/done)
+        (if (eq? v deforest/done)
             ((next done
                    (λ (state1)
                      (skip (cons v state1)))
@@ -175,7 +175,7 @@
                      (skip (cons v state1)))
                    (λ (value state1)
                      (if (proc v value)
-                         (skip (cons remove/done state1))
+                         (skip (cons deforest/done state1))
                          (yield value (cons v state1)))))
              state))))))
 
@@ -191,6 +191,45 @@
 
 (define-qi-syntax-parser remw
   [(_:id v:expr) #'(remove/ v equal-always?)])
+
+(define-deforestable #:transformer (member/ [expr v] [floe is-equal?])
+  #:fallback
+  (λ (vs)
+    (member v vs is-equal?))
+  #:impl
+  (lambda (is-equal? next ctx src)
+    (λ (done skip yield)
+      (λ (state0)
+        (define v (car state0))
+        (define state (cdr state0))
+        (if (eq? v deforest/done)
+            ((next done
+                   (λ (state1)
+                     (skip (cons v state1)))
+                   (λ (value state1)
+                     (yield value (cons v state1))))
+             state)
+            ((next done
+                   (λ (state1)
+                     (skip (cons v state1)))
+                   (λ (value state1)
+                     (if (is-equal? value v)
+                         (yield value (cons deforest/done state1))
+                         (skip (cons v state1)))))
+             state))))))
+
+(define-qi-syntax-parser member
+  [(_:id v:expr) #'(member/ v equal?)]
+  [(_:id v:expr proc) #'(remove/ v proc)])
+
+(define-qi-syntax-parser memq
+  [(_:id v:expr) #'(member/ v eq?)])
+
+(define-qi-syntax-parser memv
+  [(_:id v:expr) #'(member/ v eqv?)])
+
+(define-qi-syntax-parser memw
+  [(_:id v:expr) #'(member/ v equal-always?)])
 
 ;; Producers
 
