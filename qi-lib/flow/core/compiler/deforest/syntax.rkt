@@ -19,6 +19,17 @@
   #:datum-literals (esc #%host-expression #%fine-template #%blanket-template #%deforestable _ __)
   ())
 
+(define-syntax-class fsa
+  #:attributes (expr const?)
+  #:description "fusable stream formal argument specification"
+  (pattern ((~datum floe) f-uncompiled)
+           #:attr expr #`#,(run-passes #'f-uncompiled)
+           #:attr const? #t)
+  (pattern ((~datum expr) expr)
+           #:attr const? #f)
+  (pattern ((~datum const) expr)
+           #:attr const? #t))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Fusable Stream Producers
 ;;
@@ -39,7 +50,7 @@
 (define-syntax-class fsp-new
   #:attributes (contract prepare next name)
   #:literal-sets (fs-literals)
-  (pattern (#%deforestable _name _info c ...)
+  (pattern (#%deforestable _name _info c:fsa ...)
            #:do ((define is (syntax-local-value #'_info)))
            #:when (and (deforestable-info? is)
                        (eq? (deforestable-info-kind is) 'P))
@@ -47,6 +58,7 @@
            #:attr contract #`(#,@(deforestable-info-rtacontract is))
            #:attr prepare (apply (deforestable-info-prepare is)
                                  (syntax->list #'es^))
+           ;; #:attr prepare ((deforestable-info-prepare is) (syntax->list #'(c.expr ...)))
            #:attr next (deforestable-info-runtime is)
            #:attr name #''name
            ))
@@ -66,30 +78,23 @@
 (define-syntax-class fst-new
   #:attributes (next f state)
   #:literal-sets (fs-literals)
-  (pattern (#%deforestable name _info ((~datum floe) f-uncompiled))
+  (pattern (#%deforestable name _info arg:fsa ...)
            #:do ((define is (syntax-local-value #'_info)))
            #:when (and (deforestable-info? is)
                        (eq? (deforestable-info-kind is) 'T))
            #:attr next (deforestable-info-runtime is)
-           #:attr state #'()
-           #:attr f #`(#,(run-passes #'f-uncompiled))
-           )
-  (pattern (#%deforestable name _info ((~datum expr) n))
-           #:do ((define is (syntax-local-value #'_info)))
-           #:when (and (deforestable-info? is)
-                       (eq? (deforestable-info-kind is) 'T))
-           #:attr next (deforestable-info-runtime is)
-           #:attr state #'(n)
-           #:attr f #'()
-           )
-  (pattern (#%deforestable name _info ((~datum expr) n) ((~datum floe) f-uncompiled))
-           #:do ((define is (syntax-local-value #'_info)))
-           #:when (and (deforestable-info? is)
-                       (eq? (deforestable-info-kind is) 'T))
-           #:attr next (deforestable-info-runtime is)
-           #:attr state #'(n)
-           #:attr f #`(#,(run-passes #'f-uncompiled))
-           ))
+           #:with (const:fsa ...)
+           (for/list ((stx (in-list (syntax->list #'(arg ...))))
+                      (const? (in-list (attribute arg.const?)))
+                      #:when const?)
+             stx)
+           #:with (expr:fsa ...)
+           (for/list ((stx (in-list (syntax->list #'(arg ...))))
+                      (const? (in-list (attribute arg.const?)))
+                      #:when (not const?))
+             stx)
+           #:attr state #'(expr.expr ...)
+           #:attr f #'(const.expr ...)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Fusable Stream Consumers
@@ -98,12 +103,6 @@
 ;; values from a sequence and create a single value from those.
 ;;
 ;; Prefixed with fsc- for clarity.
-
-(define-syntax-class fsa
-  #:attributes (expr)
-  (pattern ((~datum floe) f-uncompiled)
-           #:attr expr #`#,(run-passes #'f-uncompiled))
-  (pattern ((~datum expr) expr)))
 
 (define-syntax-class fsc-new
   #:attributes (end)
