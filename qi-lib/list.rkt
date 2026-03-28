@@ -1,10 +1,7 @@
 #lang racket/base
 
 (provide (for-space qi
-                    (except-out (all-defined-out)
-                                range2
-                                range)
-                    (rename-out [range2 range])
+                    (except-out (all-defined-out))
                     (rename-out [list-tail drop])))
 
 (require (for-syntax racket/base
@@ -153,7 +150,7 @@
 
 (define deforest/done (gensym))
 
-(define-deforestable #:transformer (remove/ [expr v] [floe proc])
+(define-deforestable #:transformer (remove~ [expr v] [floe proc])
   #:fallback
   (λ (vs)
     (r:remove v vs proc))
@@ -180,17 +177,17 @@
              state))))))
 
 (define-qi-syntax-parser remove
-  [(_:id v:expr) #'(remove/ v equal?)]
-  [(_:id v:expr proc) #'(remove/ v proc)])
+  [(_:id v:expr) #'(remove~ v equal?)]
+  [(_:id v:expr proc) #'(remove~ v proc)])
 
 (define-qi-syntax-parser remq
-  [(_:id v:expr) #'(remove/ v eq?)])
+  [(_:id v:expr) #'(remove~ v eq?)])
 
 (define-qi-syntax-parser remv
-  [(_:id v:expr) #'(remove/ v eqv?)])
+  [(_:id v:expr) #'(remove~ v eqv?)])
 
 (define-qi-syntax-parser remw
-  [(_:id v:expr) #'(remove/ v equal-always?)])
+  [(_:id v:expr) #'(remove~ v equal-always?)])
 
 (define-deforestable #:transformer (remove*~ [const v] [floe proc])
   #:fallback
@@ -209,7 +206,16 @@
 (define-qi-syntax-parser remove*
   [(_:id v:expr) #'(remove*~ v equal?)])
 
-(define-deforestable #:transformer (member/ [expr v] [floe is-equal?])
+(define-qi-syntax-parser remq*
+  [(_:id v:expr) #'(remove*~ v eq?)])
+
+(define-qi-syntax-parser remv*
+  [(_:id v:expr) #'(remove*~ v eqv?)])
+
+(define-qi-syntax-parser remw*
+  [(_:id v:expr) #'(remove*~ v equal-always?)])
+
+(define-deforestable #:transformer (member~ [expr v] [floe is-equal?])
   #:fallback
   (λ (vs)
     (member v vs is-equal?))
@@ -236,21 +242,21 @@
              state))))))
 
 (define-qi-syntax-parser member
-  [(_:id v:expr) #'(member/ v equal?)]
-  [(_:id v:expr proc) #'(remove/ v proc)])
+  [(_:id v:expr) #'(member~ v equal?)]
+  [(_:id v:expr proc) #'(member~ v proc)])
 
 (define-qi-syntax-parser memq
-  [(_:id v:expr) #'(member/ v eq?)])
+  [(_:id v:expr) #'(member~ v eq?)])
 
 (define-qi-syntax-parser memv
-  [(_:id v:expr) #'(member/ v eqv?)])
+  [(_:id v:expr) #'(member~ v eqv?)])
 
 (define-qi-syntax-parser memw
-  [(_:id v:expr) #'(member/ v equal-always?)])
+  [(_:id v:expr) #'(member~ v equal-always?)])
 
 ;; Producers
 
-(define-deforestable #:producer (range [expr low] [expr high] [expr step]) ;; => range->cstream-next
+(define-deforestable #:producer (range~ [expr low] [expr high] [expr step]) ;; => range->cstream-next
   #:fallback
   (λ ()
     (r:range low high step))
@@ -292,10 +298,10 @@
 ;; yet, we use the ordinary macro machinery to expand surface variants of
 ;; `range` to a canonical form that is defined using
 ;; `define-deforestable`.
-(define-qi-syntax-parser range2
-  [(_ low:expr high:expr step:expr) #'(range low high step)]
-  [(_ low:expr high:expr) #'(range low high 1)]
-  [(_ high:expr) #'(range 0 high 1)]
+(define-qi-syntax-parser range
+  [(_ low:expr high:expr step:expr) #'(range~ low high step)]
+  [(_ low:expr high:expr) #'(range~ low high 1)]
+  [(_ high:expr) #'(range~ 0 high 1)]
   ;; not strictly necessary but this provides a better error
   ;; message than simply "range: bad syntax" that's warranted
   ;; to differentiate from racket/list's `range`
@@ -333,19 +339,7 @@
                  (op value (loop state))))
          state)))))
 
-(define-qi-syntax-parser car
-  [_:id #'(list-ref* 0 'car)])
-
-(define-qi-syntax-parser cadr
-  [_:id #'(list-ref* 1 'cadr)])
-
-(define-qi-syntax-parser caddr
-  [_:id #'(list-ref* 2 'caddr)])
-
-(define-qi-syntax-parser cadddr
-  [_:id #'(list-ref* 3 'cadddr)])
-
-(define-deforestable #:consumer (list-ref* [expr n] [expr name])
+(define-deforestable #:consumer (list-ref~ [expr n] [expr name])
   #:fallback
   (λ (vs)
       (r:list-ref vs n))
@@ -367,7 +361,19 @@
          state)))))
 
 (define-qi-syntax-parser list-ref
-  [(_ n:expr) #'(list-ref* n 'list-ref)])
+  [(_ n:expr) #'(list-ref~ n 'list-ref)])
+
+(define-qi-syntax-parser car
+  [_:id #'(list-ref~ 0 'car)])
+
+(define-qi-syntax-parser cadr
+  [_:id #'(list-ref~ 1 'cadr)])
+
+(define-qi-syntax-parser caddr
+  [_:id #'(list-ref~ 2 'caddr)])
+
+(define-qi-syntax-parser cadddr
+  [_:id #'(list-ref~ 3 'cadddr)])
 
 (define-deforestable #:consumer length
   #:fallback
@@ -424,7 +430,7 @@
                  (cons value (loop state))))
          state)))))
 
-(define-deforestable #:consumer (assoc* [expr v] [floe is-equal?])
+(define-deforestable #:consumer (assoc~ [expr v] [floe is-equal?])
   #:fallback
   (λ (vs)
     (assoc v vs is-equal?))
@@ -441,17 +447,17 @@
          state)))))
 
 (define-qi-syntax-parser assoc
-  [(_ v:expr) #'(assoc* v equal?)]
-  [(_ v:expr is-equal?) #'(assoc* v is-equal?)])
+  [(_ v:expr) #'(assoc~ v equal?)]
+  [(_ v:expr is-equal?) #'(assoc~ v is-equal?)])
 
 (define-qi-syntax-parser assw
-  [(_ v:expr) #'(assoc* v equal-always?)])
+  [(_ v:expr) #'(assoc~ v equal-always?)])
 
 (define-qi-syntax-parser assv
-  [(_ v:expr) #'(assoc* v eqv?)])
+  [(_ v:expr) #'(assoc~ v eqv?)])
 
 (define-qi-syntax-parser assq
-  [(_ v:expr) #'(assoc* v eq?)])
+  [(_ v:expr) #'(assoc~ v eq?)])
 
 (define-deforestable #:consumer (assf [floe pred?])
   #:fallback
@@ -472,7 +478,7 @@
 #;(define-qi-syntax-parser count
   [(_ proc) #'(~> (filter-map proc) length)])
 
-(define-deforestable #:consumer (index-of* [expr v] [floe is-equal?])
+(define-deforestable #:consumer (index-of~ [expr v] [floe is-equal?])
   #:fallback
   (λ (vs)
     (index-of vs v is-equal?))
@@ -490,8 +496,8 @@
          state)))))
 
 (define-qi-syntax-parser index-of
-  [(_ v:expr) #'(index-of* v equal?)]
-  [(_ v:expr is-equal?) #'(index-of* v is-equal?)])
+  [(_ v:expr) #'(index-of~ v equal?)]
+  [(_ v:expr is-equal?) #'(index-of~ v is-equal?)])
 
 (define-deforestable #:consumer (index-where [floe proc])
   #:fallback
