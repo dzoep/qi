@@ -179,25 +179,6 @@
                          (yield value (cons v state1)))))
              state))))))
 
-(define-deforestable #:transformer (remove** [expr v] [floe proc])
-  #:fallback
-  (λ (vs)
-    (r:remove v vs proc))
-  #:impl
-  (lambda (v proc next ctx src)
-    (λ (done skip yield)
-      (λ (state0)
-        (define v (car state0))
-        (define state (cdr state0))
-        ((next done
-               (λ (state1)
-                 (skip (cons v state1)))
-               (λ (value state1)
-                 (if (proc v value)
-                     (skip (cons v state1))
-                     (yield value (cons v state1)))))
-         state)))))
-
 (define-qi-syntax-parser remove
   [(_:id v:expr) #'(remove/ v equal?)]
   [(_:id v:expr proc) #'(remove/ v proc)])
@@ -210,6 +191,23 @@
 
 (define-qi-syntax-parser remw
   [(_:id v:expr) #'(remove/ v equal-always?)])
+
+(define-deforestable #:transformer (remove*~ [const v] [floe proc])
+  #:fallback
+  (λ (vs)
+    (r:remove v vs proc))
+  #:impl
+  (lambda (v proc next ctx src)
+    (λ (done skip yield)
+      (next done
+            skip
+            (λ (value state)
+              (if (proc v value)
+                  (skip state)
+                  (yield value state)))))))
+
+(define-qi-syntax-parser remove*
+  [(_:id v:expr) #'(remove*~ v equal?)])
 
 (define-deforestable #:transformer (member/ [expr v] [floe is-equal?])
   #:fallback
