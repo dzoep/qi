@@ -1,7 +1,7 @@
 #lang racket/base
 
 (provide (for-space qi
-                    (except-out (all-defined-out))
+                    (all-defined-out)
                     (rename-out [list-tail drop])))
 
 (require (for-syntax racket/base
@@ -253,6 +253,35 @@
 
 (define-qi-syntax-parser memw
   [(_:id v:expr) #'(member~ v equal-always?)])
+
+(define-deforestable #:transformer (memf~ [expr init] [floe proc])
+  #:fallback
+  (λ (vs)
+    (memf proc vs))
+  #:impl
+  (lambda (proc next ctx src)
+    (λ (done skip yield)
+      (λ (state0)
+        (define v (car state0))
+        (define state (cdr state0))
+        (if (eq? v deforest/done)
+            ((next done
+                   (λ (state1)
+                     (skip (cons v state1)))
+                   (λ (value state1)
+                     (yield value (cons v state1))))
+             state)
+            ((next done
+                   (λ (state1)
+                     (skip (cons v state1)))
+                   (λ (value state1)
+                     (if (proc value)
+                         (yield value (cons deforest/done state1))
+                         (skip (cons v state1)))))
+             state))))))
+
+(define-qi-syntax-parser memf
+  [(_:id proc) #'(memf~ 'unused proc)])
 
 ;; Producers
 
