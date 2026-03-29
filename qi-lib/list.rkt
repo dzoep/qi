@@ -368,6 +368,26 @@
 (define-qi-syntax-parser dropf
   [(_:id pred) #'(dropf~ 'unused pred)])
 
+(define-deforestable #:transformer (list-set [expr pos] [const value])
+  #:fallback
+  (lambda (vs)
+    (list-set lst post value))
+  #:impl
+  (lambda (new-value next ctx src)
+    (lambda (done skip yield)
+      (lambda (state0)
+        (define pos (car state0))
+        (define state (cdr state0))
+        ((next done
+               (lambda (state1)
+                 (skip (cons pos state1)))
+               (lambda (value state1)
+                 (yield (if (zero? pos)
+                            new-value
+                            value)
+                        (cons (sub1 pos) state1))))
+         state)))))
+
 ;; Producers
 
 (define-deforestable #:producer (range~ [expr low] [expr high] [expr step]) ;; => range->cstream-next
