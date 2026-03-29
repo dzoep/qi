@@ -5,18 +5,13 @@
          fsc-new)
 
 (require syntax/parse
-         "../../passes.rkt"
-         "../../strategy.rkt"
          "../../../aux-syntax.rkt"
          (for-template racket/base
-                       "../../passes.rkt"
-                       "../../strategy.rkt")
-         (for-syntax racket/base
-                     syntax/parse))
+                       "../../passes.rkt"))
 
 ;; Literals set used for matching Fusable Stream Literals
 (define-literal-set fs-literals
-  #:datum-literals (esc #%host-expression #%fine-template #%blanket-template #%deforestable _ __)
+  #:datum-literals (#%deforestable)
   ())
 
 (define-syntax-class fsa
@@ -37,15 +32,6 @@
 ;; of values and they annotate the syntax with attributes that will be
 ;; used in the compiler to apply optimizations.
 ;;
-;; All are prefixed with fsp- for clarity.
-
-;; TODO: this procedure is copied from 1000-qi0.rkt, it should
-;; probably be moved to a supporting module for both the fallback
-;; codegen and this syntax class.
-(define (deforestable-clause-parser c)
-  (syntax-parse c
-    [((~datum floe) e) #'(qi0->racket e)]
-    [((~datum expr) e) #'e]))
 
 (define-syntax-class fsp-new
   #:attributes (contract prepare next name)
@@ -54,14 +40,10 @@
            #:do ((define is (syntax-local-value #'_info)))
            #:when (and (deforestable-info? is)
                        (eq? (deforestable-info-kind is) 'P))
-           #:with es^ #`#,(map deforestable-clause-parser (attribute c))
            #:attr contract #`(#,@(deforestable-info-rtacontract is))
-           #:attr prepare (apply (deforestable-info-prepare is)
-                                 (syntax->list #'es^))
-           ;; #:attr prepare ((deforestable-info-prepare is) (syntax->list #'(c.expr ...)))
+           #:attr prepare (apply (deforestable-info-prepare is) (syntax->list #'(c.expr ...)))
            #:attr next (deforestable-info-runtime is)
-           #:attr name #''name
-           ))
+           #:attr name #''name))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Fusable Stream Transformers
@@ -102,7 +84,6 @@
 ;; Syntax classes used for matching functions that can consume all
 ;; values from a sequence and create a single value from those.
 ;;
-;; Prefixed with fsc- for clarity.
 
 (define-syntax-class fsc-new
   #:attributes (end)
