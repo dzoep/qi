@@ -10,8 +10,7 @@
          (only-in "flow/space.rkt"
                   define-qi-alias)
          "macro.rkt"
-         (prefix-in r: racket/base)
-         (prefix-in r: racket/list)
+         racket/list
          racket/contract/base
          racket/contract/region
          racket/match)
@@ -21,7 +20,7 @@
 (define-deforestable #:transformer (map [floe f])
   #:fallback
   (lambda (vs)  ; single list arg      
-      (r:map f vs))
+      (map f vs))
   #:impl
   (lambda (f next ctx src)
     (λ (done skip yield)
@@ -33,7 +32,7 @@
 (define-deforestable #:transformer (filter [floe f])
   #:fallback
   (λ (vs)
-      (r:filter f vs))
+      (filter f vs))
   #:impl
   (lambda (f next ctx src)
     (λ (done skip yield)
@@ -47,7 +46,7 @@
 (define-deforestable #:transformer (filter-map [floe f])
   #:fallback
   (λ (vs)
-      (r:filter-map f vs))
+      (filter-map f vs))
   #:impl
   (lambda (f next ctx src)
     (λ (done skip yield)
@@ -62,7 +61,7 @@
 (define-deforestable #:transformer (take [expr n])
   #:fallback
   (λ (vs)
-      (r:take vs n))
+      (take vs n))
   #:impl
   (lambda (next ctx src)
     (λ (done skip yield)
@@ -88,7 +87,7 @@
 (define-deforestable #:transformer (filter-not [floe f])
   #:fallback
   (lambda (vs)
-      (r:filter-not f vs))
+      (filter-not f vs))
   #:impl
   (lambda (f next ctx src)
     (λ (done skip yield)
@@ -102,7 +101,7 @@
 (define-deforestable #:transformer (list-tail [expr n])
   #:fallback
   (lambda (vs)
-      (r:list-tail vs n))
+      (list-tail vs n))
   #:impl
   (lambda (next ctx src)
     (λ (done skip yield)
@@ -153,7 +152,7 @@
 (define-deforestable #:transformer (remove~ [expr v] [floe proc])
   #:fallback
   (λ (vs)
-    (r:remove v vs proc))
+    (remove v vs proc))
   #:impl
   (lambda (proc next ctx src)
     (λ (done skip yield)
@@ -221,7 +220,7 @@
 (define-deforestable #:transformer (remove*~ [const v] [floe proc])
   #:fallback
   (λ (vs)
-    (r:remove v vs proc))
+    (remove v vs proc))
   #:impl
   (lambda (v proc next ctx src)
     (λ (done skip yield)
@@ -317,7 +316,7 @@
 (define-deforestable #:producer (range~ [expr low] [expr high] [expr step]) ;; => range->cstream-next
   #:fallback
   (λ ()
-    (r:range low high step))
+    (range low high step))
   #:impl
   (lambda (done skip yield)
     (λ (state)
@@ -372,7 +371,7 @@
 (define-deforestable #:consumer (foldl [floe op] [expr init])
   #:fallback
   (λ (vs)
-      (r:foldl op init vs))
+      (foldl op init vs))
   #:impl
   (lambda (op init next ctx src)
     (lambda (state)
@@ -386,7 +385,7 @@
 (define-deforestable #:consumer (foldr [floe f] [expr init])
   #:fallback
   (λ (vs)
-      (r:foldr f init vs))
+      (foldr f init vs))
   #:impl
   (lambda (op init next ctx src)
     (lambda (state)
@@ -400,7 +399,7 @@
 (define-deforestable #:consumer (list-ref~ [expr n] [expr name])
   #:fallback
   (λ (vs)
-      (r:list-ref vs n))
+      (list-ref vs n))
   #:impl
   (lambda (init-countdown name next ctx src)
     (λ (state)
@@ -435,7 +434,7 @@
 
 (define-deforestable #:consumer length
   #:fallback
-  r:length
+  length
   #:impl
   (lambda (next ctx src)
     (λ (state)
@@ -449,7 +448,7 @@
 
 (define-deforestable #:consumer empty?
   #:fallback
-  r:empty?
+  empty?
   #:impl
   (lambda (next ctx src)
     (λ (state)
@@ -463,7 +462,7 @@
 
 (define-deforestable #:consumer pair?
   #:fallback
-  r:pair?
+  pair?
   #:impl
   (lambda (next ctx src)
     (λ (state)
@@ -477,7 +476,7 @@
 
 (define-deforestable #:consumer cstream->list
   #:fallback
-  r:identity
+  identity
   #:impl
   (lambda (next ctx src)
     (λ (state)
@@ -633,7 +632,7 @@
 (define-deforestable #:consumer reverse
   #:fallback
   (λ (vs)
-    (r:reverse vs))
+    (reverse vs))
   #:impl
   (lambda (next ctx src)
     (lambda (state)
