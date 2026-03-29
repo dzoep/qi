@@ -84,6 +84,20 @@
                      (yield value new-state)))
              state))))))
 
+(define-deforestable #:transformer (takef [floe pred])
+  #:fallback
+  (λ (vs)
+    (takef vs pred))
+  #:impl
+  (lambda (pred next ctx src)
+    (λ (done skip yield)
+      (next done
+            skip
+            (λ (value state)
+              (if (pred value)
+                  (yield value state)
+                  (done)))))))
+
 (define-deforestable #:transformer (filter-not [floe f])
   #:fallback
   (lambda (vs)
