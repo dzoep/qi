@@ -189,6 +189,35 @@
 (define-qi-syntax-parser remw
   [(_:id v:expr) #'(remove~ v equal-always?)])
 
+(define-deforestable #:transformer (remf~ [expr init] [floe pred])
+  #:fallback
+  (λ (vs)
+    (remf pred vs))
+  #:impl
+  (lambda (pred next ctx src)
+    (λ (done skip yield)
+      (λ (state0)
+        (define v (car state0))
+        (define state (cdr state0))
+        (if (eq? v deforest/done)
+            ((next done
+                   (λ (state1)
+                     (skip (cons v state1)))
+                   (λ (value state1)
+                     (yield value (cons v state1))))
+             state)
+            ((next done
+                   (λ (state1)
+                     (skip (cons v state1)))
+                   (λ (value state1)
+                     (if (pred value)
+                         (skip (cons deforest/done state1))
+                         (yield value (cons v state1)))))
+             state))))))
+
+(define-qi-syntax-parser remf
+  [(_:id pred) #'(remf~ 'unused pred)])
+
 (define-deforestable #:transformer (remove*~ [const v] [floe proc])
   #:fallback
   (λ (vs)
