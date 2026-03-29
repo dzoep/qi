@@ -408,6 +408,29 @@
                         (cons (sub1 pos) state1))))
          state)))))
 
+(define-deforestable #:transformer (indexes-of~ [expr idx] [const v] [floe is-equal?])
+  #:fallback
+  (lambda (vs)
+    (indexes-of lst v is-equal?))
+  #:impl
+  (lambda (v is-equal? next ctx src)
+    (lambda (done skip yield)
+      (lambda (state0)
+        (define idx (car state0))
+        (define state (cdr state0))
+        ((next done
+               (lambda (state1)
+                 (skip (cons idx state1)))
+               (lambda (value state1)
+                 (if (is-equal? value v)
+                     (yield idx (cons (add1 idx) state1))
+                     (skip (cons (add1 idx) state1)))))
+         state)))))
+
+(define-qi-syntax-parser indexes-of
+  [(_:id v:expr is-equal?) #'(indexes-of~ 0 v is-equal?)]
+  [(_:id v:expr) #'(indexes-of~ 0 v equal?)])
+
 ;; Producers
 
 (define-deforestable #:producer (range~ [expr low] [expr high] [expr step]) ;; => range->cstream-next

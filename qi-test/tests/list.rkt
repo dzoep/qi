@@ -492,6 +492,12 @@
                          (list-update 2 (lambda (v) (cons (sqrt (car v)) (cdr v))))))
                   '((1 one) (2 two) (3 three) (4 four) (5 five) (6 six) (5 five) (7 seven) (5 five) (8 eight) (9 nine) (5 five)))
                  '((1 one) (9 three) (5 five) (25 five) (49 seven) (25 five) (81 nine) (25 five)))
+    (test-equal? "indexes-of"
+                 ((☯ (~> (map (lambda (v) (cons (sqr (car v)) (cdr v))))
+                         (filter (lambda (v) (odd? (car v))))
+                         (indexes-of '(25 five))))
+                  '((1 one) (2 two) (3 three) (4 four) (5 five) (6 six) (5 five) (7 seven) (5 five) (8 eight) (9 nine) (5 five)))
+                 '(2 3 5 7))
     )))
 
 (module+ main
