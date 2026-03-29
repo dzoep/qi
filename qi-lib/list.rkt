@@ -339,6 +339,35 @@
 (define-qi-syntax-parser memf
   [(_:id proc) #'(memf~ 'unused proc)])
 
+(define-deforestable #:transformer (dropf~ [expr init] [floe pred])
+  #:fallback
+  (lambda (vs)
+    (dropf vs pred))
+  #:impl
+  (lambda (pred next ctx src)
+    (lambda (done skip yield)
+      (lambda (state0)
+        (define v (car state0))
+        (define state (cdr state0))
+        (if (eq? v deforest/done)
+            ((next done
+                   (lambda (state1)
+                     (skip (cons v state1)))
+                   (lambda (value state1)
+                     (yield value (cons v state1))))
+             state)
+            ((next done
+                   (lambda (state1)
+                     (skip (cons v state1)))
+                   (lambda (value state1)
+                     (if (pred value)
+                         (skip (cons v state1))
+                         (yield value (cons deforest/done state1)))))
+             state))))))
+
+(define-qi-syntax-parser dropf
+  [(_:id pred) #'(dropf~ 'unused pred)])
+
 ;; Producers
 
 (define-deforestable #:producer (range~ [expr low] [expr high] [expr step]) ;; => range->cstream-next
