@@ -388,6 +388,26 @@
                         (cons (sub1 pos) state1))))
          state)))))
 
+(define-deforestable #:transformer (list-update [expr pos] [floe updater])
+  #:fallback
+  (lambda (vs)
+    (list-update lst post updater))
+  #:impl
+  (lambda (updater next ctx src)
+    (lambda (done skip yield)
+      (lambda (state0)
+        (define pos (car state0))
+        (define state (cdr state0))
+        ((next done
+               (lambda (state1)
+                 (skip (cons pos state1)))
+               (lambda (value state1)
+                 (yield (if (zero? pos)
+                            (updater value)
+                            value)
+                        (cons (sub1 pos) state1))))
+         state)))))
+
 ;; Producers
 
 (define-deforestable #:producer (range~ [expr low] [expr high] [expr step]) ;; => range->cstream-next
