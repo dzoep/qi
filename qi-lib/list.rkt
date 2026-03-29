@@ -243,6 +243,20 @@
 (define-qi-syntax-parser remw*
   [(_:id v:expr) #'(remove*~ v equal-always?)])
 
+(define-deforestable #:transformer (remf* [floe pred])
+  #:fallback
+  (λ (vs)
+    (remf* pred vs))
+  #:impl
+  (lambda (pred next ctx src)
+    (λ (done skip yield)
+      (next done
+            skip
+            (λ (value state)
+              (if (pred value)
+                  (skip state)
+                  (yield value state)))))))
+
 (define-deforestable #:transformer (member~ [expr v] [floe is-equal?])
   #:fallback
   (λ (vs)
