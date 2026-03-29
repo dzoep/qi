@@ -411,7 +411,7 @@
 (define-deforestable #:transformer (indexes-of~ [expr idx] [const v] [floe is-equal?])
   #:fallback
   (lambda (vs)
-    (indexes-of lst v is-equal?))
+    (indexes-of vs v is-equal?))
   #:impl
   (lambda (v is-equal? next ctx src)
     (lambda (done skip yield)
@@ -431,9 +431,31 @@
   [(_:id v:expr is-equal?) #'(indexes-of~ 0 v is-equal?)]
   [(_:id v:expr) #'(indexes-of~ 0 v equal?)])
 
+(define-deforestable #:transformer (indexes-where~ [expr idx] [floe proc])
+  #:fallback
+  (lambda (vs)
+    (indexes-where vs proc))
+  #:impl
+  (lambda (proc next ctx src)
+    (lambda (done skip yield)
+      (lambda (state0)
+        (define idx (car state0))
+        (define state (cdr state0))
+        ((next done
+               (lambda (state1)
+                 (skip (cons idx state1)))
+               (lambda (value state1)
+                 (if (proc value)
+                     (yield idx (cons (add1 idx) state1))
+                     (skip (cons (add1 idx) state1)))))
+         state)))))
+
+(define-qi-syntax-parser indexes-where
+  [(_:id proc) #'(indexes-where~ 0 proc)])
+
 ;; Producers
 
-(define-deforestable #:producer (range~ [expr low] [expr high] [expr step]) ;; => range->cstream-next
+(define-deforestable #:producer (range~ [expr low] [expr high] [expr step])
   #:fallback
   (λ ()
     (range low high step))
