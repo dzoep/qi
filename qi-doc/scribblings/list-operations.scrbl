@@ -112,6 +112,33 @@ Deforestable version of @racket[filter] from @racketmodname[racket/base].
 
 }
 
+remove
+
+remq
+
+remv
+
+remw
+
+remove*
+
+remq*
+
+remv*
+
+remw*
+
+member
+
+memw
+
+memv
+
+memq
+
+memf
+
+
 @defidform[cdr]{
 
 Deforestable version of @racket[cdr] from @racketmodname[racket/base].
@@ -142,6 +169,14 @@ Deforestable version of @racket[rest] from @racketmodname[racket/base].
 
 }
 
+list-update
+
+list-set
+
+indexes-of
+
+indexes-where
+
 @defform[
   (take pos)
   #:contracts
@@ -159,6 +194,8 @@ Deforestable version of @racket[take] from @racketmodname[racket/list].
 Deforestable version of @racket[takef] from @racketmodname[racket/list].
 
 }
+
+dropf
 
 @defform[
   (filter-map proc)
@@ -178,7 +215,9 @@ Deforestable version of @racket[filter-not] from @racketmodname[racket/list].
 
 }
 
+remf
 
+remf*
 
 
 

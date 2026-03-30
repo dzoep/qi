@@ -94,6 +94,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Transformers
 
+;; Special values used by stateful transformers
+(define deforest/done (gensym))
+
 (define-deforestable #:transformer (list-tail [expr n])
   #:fallback
   (lambda (vs)
@@ -151,102 +154,6 @@
                   (yield value state)
                   (skip state)))))))
 
-(define-qi-syntax-parser cdr
-  [_:id #'(list-tail 1)])
-
-(define-qi-syntax-parser cddr
-  [_:id #'(list-tail 2)])
-
-(define-qi-syntax-parser cdddr
-  [_:id #'(list-tail 3)])
-
-(define-qi-syntax-parser cddddr
-  [_:id #'(list-tail 4)])
-
-(define-qi-syntax-parser cdddddr
-  [_:id #'(list-tail 5)])
-
-(define-qi-syntax-parser rest
-  [_:id #'(list-tail 1)])
-
-(define-deforestable #:transformer (take [expr n])
-  #:fallback
-  (λ (vs)
-      (take vs n))
-  #:impl
-  (lambda (next ctx src)
-    (λ (done skip yield)
-      (λ (take-state)
-        (define n (car take-state))
-        (define state (cdr take-state))
-        (if (zero? n)
-            (done)
-            ((next (λ ()
-                     ((contract (-> pair? any)
-                                (λ (v) v)
-                                'take ctx
-                                #f
-                                src)
-                      '()))
-                   (λ (state)
-                     (skip (cons n state)))
-                   (λ (value state)
-                     (define new-state (cons (sub1 n) state))
-                     (yield value new-state)))
-             state))))))
-
-(define-deforestable #:transformer (takef [floe pred])
-  #:fallback
-  (λ (vs)
-    (takef vs pred))
-  #:impl
-  (lambda (pred next ctx src)
-    (λ (done skip yield)
-      (next done
-            skip
-            (λ (value state)
-              (if (pred value)
-                  (yield value state)
-                  (done)))))))
-
-(define-deforestable #:transformer (filter-map [floe f])
-  #:fallback
-  (λ (vs)
-      (filter-map f vs))
-  #:impl
-  (lambda (f next ctx src)
-    (λ (done skip yield)
-      (next done
-            skip
-            (λ (value state)
-              (let ([fv (f value)])
-                (if fv
-                    (yield fv state)
-                    (skip state))))))))
-
-(define-deforestable #:transformer (filter-not [floe f])
-  #:fallback
-  (lambda (vs)
-      (filter-not f vs))
-  #:impl
-  (lambda (f next ctx src)
-    (λ (done skip yield)
-      (next done
-            skip
-            (λ (value state)
-              (if (f value)
-                  (skip state)
-                  (yield value state)))))))
-
-
-
-
-
-
-
-
-(define deforest/done (gensym))
-
 (define-deforestable #:transformer (remove~ [expr v] [floe proc])
   #:fallback
   (λ (vs)
@@ -286,35 +193,6 @@
 (define-qi-syntax-parser remw
   [(_:id v:expr) #'(remove~ v equal-always?)])
 
-(define-deforestable #:transformer (remf~ [expr init] [floe pred])
-  #:fallback
-  (λ (vs)
-    (remf pred vs))
-  #:impl
-  (lambda (pred next ctx src)
-    (λ (done skip yield)
-      (λ (state0)
-        (define v (car state0))
-        (define state (cdr state0))
-        (if (eq? v deforest/done)
-            ((next done
-                   (λ (state1)
-                     (skip (cons v state1)))
-                   (λ (value state1)
-                     (yield value (cons v state1))))
-             state)
-            ((next done
-                   (λ (state1)
-                     (skip (cons v state1)))
-                   (λ (value state1)
-                     (if (pred value)
-                         (skip (cons deforest/done state1))
-                         (yield value (cons v state1)))))
-             state))))))
-
-(define-qi-syntax-parser remf
-  [(_:id pred) #'(remf~ 'unused pred)])
-
 (define-deforestable #:transformer (remove*~ [const v] [floe proc])
   #:fallback
   (λ (vs)
@@ -340,20 +218,6 @@
 
 (define-qi-syntax-parser remw*
   [(_:id v:expr) #'(remove*~ v equal-always?)])
-
-(define-deforestable #:transformer (remf* [floe pred])
-  #:fallback
-  (λ (vs)
-    (remf* pred vs))
-  #:impl
-  (lambda (pred next ctx src)
-    (λ (done skip yield)
-      (next done
-            skip
-            (λ (value state)
-              (if (pred value)
-                  (skip state)
-                  (yield value state)))))))
 
 (define-deforestable #:transformer (member~ [expr v] [floe is-equal?])
   #:fallback
@@ -385,14 +249,14 @@
   [(_:id v:expr) #'(member~ v equal?)]
   [(_:id v:expr proc) #'(member~ v proc)])
 
-(define-qi-syntax-parser memq
-  [(_:id v:expr) #'(member~ v eq?)])
+(define-qi-syntax-parser memw
+  [(_:id v:expr) #'(member~ v equal-always?)])
 
 (define-qi-syntax-parser memv
   [(_:id v:expr) #'(member~ v eqv?)])
 
-(define-qi-syntax-parser memw
-  [(_:id v:expr) #'(member~ v equal-always?)])
+(define-qi-syntax-parser memq
+  [(_:id v:expr) #'(member~ v eq?)])
 
 (define-deforestable #:transformer (memf~ [expr init] [floe proc])
   #:fallback
@@ -423,54 +287,23 @@
 (define-qi-syntax-parser memf
   [(_:id proc) #'(memf~ 'unused proc)])
 
-(define-deforestable #:transformer (dropf~ [expr init] [floe pred])
-  #:fallback
-  (lambda (vs)
-    (dropf vs pred))
-  #:impl
-  (lambda (pred next ctx src)
-    (lambda (done skip yield)
-      (lambda (state0)
-        (define v (car state0))
-        (define state (cdr state0))
-        (if (eq? v deforest/done)
-            ((next done
-                   (lambda (state1)
-                     (skip (cons v state1)))
-                   (lambda (value state1)
-                     (yield value (cons v state1))))
-             state)
-            ((next done
-                   (lambda (state1)
-                     (skip (cons v state1)))
-                   (lambda (value state1)
-                     (if (pred value)
-                         (skip (cons v state1))
-                         (yield value (cons deforest/done state1)))))
-             state))))))
+(define-qi-syntax-parser cdr
+  [_:id #'(list-tail 1)])
 
-(define-qi-syntax-parser dropf
-  [(_:id pred) #'(dropf~ 'unused pred)])
+(define-qi-syntax-parser cddr
+  [_:id #'(list-tail 2)])
 
-(define-deforestable #:transformer (list-set [expr pos] [const value])
-  #:fallback
-  (lambda (vs)
-    (list-set lst post value))
-  #:impl
-  (lambda (new-value next ctx src)
-    (lambda (done skip yield)
-      (lambda (state0)
-        (define pos (car state0))
-        (define state (cdr state0))
-        ((next done
-               (lambda (state1)
-                 (skip (cons pos state1)))
-               (lambda (value state1)
-                 (yield (if (zero? pos)
-                            new-value
-                            value)
-                        (cons (sub1 pos) state1))))
-         state)))))
+(define-qi-syntax-parser cdddr
+  [_:id #'(list-tail 3)])
+
+(define-qi-syntax-parser cddddr
+  [_:id #'(list-tail 4)])
+
+(define-qi-syntax-parser cdddddr
+  [_:id #'(list-tail 5)])
+
+(define-qi-syntax-parser rest
+  [_:id #'(list-tail 1)])
 
 (define-deforestable #:transformer (list-update [expr pos] [floe updater])
   #:fallback
@@ -488,6 +321,26 @@
                (lambda (value state1)
                  (yield (if (zero? pos)
                             (updater value)
+                            value)
+                        (cons (sub1 pos) state1))))
+         state)))))
+
+(define-deforestable #:transformer (list-set [expr pos] [const value])
+  #:fallback
+  (lambda (vs)
+    (list-set lst post value))
+  #:impl
+  (lambda (new-value next ctx src)
+    (lambda (done skip yield)
+      (lambda (state0)
+        (define pos (car state0))
+        (define state (cdr state0))
+        ((next done
+               (lambda (state1)
+                 (skip (cons pos state1)))
+               (lambda (value state1)
+                 (yield (if (zero? pos)
+                            new-value
                             value)
                         (cons (sub1 pos) state1))))
          state)))))
@@ -536,6 +389,147 @@
 
 (define-qi-syntax-parser indexes-where
   [(_:id proc) #'(indexes-where~ 0 proc)])
+
+(define-deforestable #:transformer (take [expr n])
+  #:fallback
+  (λ (vs)
+      (take vs n))
+  #:impl
+  (lambda (next ctx src)
+    (λ (done skip yield)
+      (λ (take-state)
+        (define n (car take-state))
+        (define state (cdr take-state))
+        (if (zero? n)
+            (done)
+            ((next (λ ()
+                     ((contract (-> pair? any)
+                                (λ (v) v)
+                                'take ctx
+                                #f
+                                src)
+                      '()))
+                   (λ (state)
+                     (skip (cons n state)))
+                   (λ (value state)
+                     (define new-state (cons (sub1 n) state))
+                     (yield value new-state)))
+             state))))))
+
+(define-deforestable #:transformer (takef [floe pred])
+  #:fallback
+  (λ (vs)
+    (takef vs pred))
+  #:impl
+  (lambda (pred next ctx src)
+    (λ (done skip yield)
+      (next done
+            skip
+            (λ (value state)
+              (if (pred value)
+                  (yield value state)
+                  (done)))))))
+
+(define-deforestable #:transformer (dropf~ [expr init] [floe pred])
+  #:fallback
+  (lambda (vs)
+    (dropf vs pred))
+  #:impl
+  (lambda (pred next ctx src)
+    (lambda (done skip yield)
+      (lambda (state0)
+        (define v (car state0))
+        (define state (cdr state0))
+        (if (eq? v deforest/done)
+            ((next done
+                   (lambda (state1)
+                     (skip (cons v state1)))
+                   (lambda (value state1)
+                     (yield value (cons v state1))))
+             state)
+            ((next done
+                   (lambda (state1)
+                     (skip (cons v state1)))
+                   (lambda (value state1)
+                     (if (pred value)
+                         (skip (cons v state1))
+                         (yield value (cons deforest/done state1)))))
+             state))))))
+
+(define-qi-syntax-parser dropf
+  [(_:id pred) #'(dropf~ 'unused pred)])
+
+(define-deforestable #:transformer (filter-map [floe f])
+  #:fallback
+  (λ (vs)
+      (filter-map f vs))
+  #:impl
+  (lambda (f next ctx src)
+    (λ (done skip yield)
+      (next done
+            skip
+            (λ (value state)
+              (let ([fv (f value)])
+                (if fv
+                    (yield fv state)
+                    (skip state))))))))
+
+(define-deforestable #:transformer (filter-not [floe f])
+  #:fallback
+  (lambda (vs)
+      (filter-not f vs))
+  #:impl
+  (lambda (f next ctx src)
+    (λ (done skip yield)
+      (next done
+            skip
+            (λ (value state)
+              (if (f value)
+                  (skip state)
+                  (yield value state)))))))
+
+(define-deforestable #:transformer (remf~ [expr init] [floe pred])
+  #:fallback
+  (λ (vs)
+    (remf pred vs))
+  #:impl
+  (lambda (pred next ctx src)
+    (λ (done skip yield)
+      (λ (state0)
+        (define v (car state0))
+        (define state (cdr state0))
+        (if (eq? v deforest/done)
+            ((next done
+                   (λ (state1)
+                     (skip (cons v state1)))
+                   (λ (value state1)
+                     (yield value (cons v state1))))
+             state)
+            ((next done
+                   (λ (state1)
+                     (skip (cons v state1)))
+                   (λ (value state1)
+                     (if (pred value)
+                         (skip (cons deforest/done state1))
+                         (yield value (cons v state1)))))
+             state))))))
+
+(define-qi-syntax-parser remf
+  [(_:id pred) #'(remf~ 'unused pred)])
+
+(define-deforestable #:transformer (remf* [floe pred])
+  #:fallback
+  (λ (vs)
+    (remf* pred vs))
+  #:impl
+  (lambda (pred next ctx src)
+    (λ (done skip yield)
+      (next done
+            skip
+            (λ (value state)
+              (if (pred value)
+                  (skip state)
+                  (yield value state)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Consumers
