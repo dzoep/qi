@@ -15,6 +15,83 @@
          racket/contract/region
          racket/match)
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Producers
+
+(define-deforestable #:producer list->cstream ;; => list->cstream->cstream-next
+  #:fallback
+  identity
+  #:impl
+  (lambda ()
+    (lambda (done skip yield)
+      (λ (state)
+        (cond [(null? state) (done)]
+              [else (yield (car state) (cdr state))]))))
+  #:prepare
+  (lambda (consing next)
+      (lambda (lst)
+        (next (consing lst))))
+  #:contracts
+  (list?))
+
+(define-deforestable #:producer (range~ [expr low] [const high] [const step])
+  #:fallback
+  (λ ()
+    (range low high step))
+  #:impl
+  (lambda (high step)
+    (lambda (done skip yield)
+      (λ (low)
+        (cond [(< low high)
+               (yield low (+ low step))]
+              [else (done)]))))
+  #:prepare
+  (lambda (consing next)
+      ;;;
+      (define/contract (something l h s)
+        (-> number? number? number? any)
+        (next (consing l)))
+      (lambda ()
+        (something low high step))))
+
+;; We'd like to indicate multiple surface variants for `range` that
+;; expand to a canonical form, and provide a single codegen just for the
+;; canonical form.
+;; Since `define-deforestable` doesn't support indicating multiple cases
+;; yet, we use the ordinary macro machinery to expand surface variants of
+;; `range` to a canonical form that is defined using
+;; `define-deforestable`.
+(define-qi-syntax-parser range
+  [(_ low:expr high:expr step:expr) #'(range~ low high step)]
+  [(_ low:expr high:expr) #'(range~ low high 1)]
+  [(_ high:expr) #'(range~ 0 high 1)]
+  ;; not strictly necessary but this provides a better error
+  ;; message than simply "range: bad syntax" that's warranted
+  ;; to differentiate from racket/list's `range`
+  [_:id (report-syntax-error this-syntax
+          "(range arg ...)"
+          "range expects at least one argument")])
+
+(define-deforestable #:producer (make-list~ [expr init] [const k] [const v])
+  #:fallback
+  (lambda ()
+    (make-list k v))
+  #:impl
+  (lambda (k v)
+    (lambda (done skip yield)
+      (lambda (idx)
+        (cond [(< idx k)
+               (yield v (add1 idx))]
+              [else (done)]))))
+  #:prepare
+  (lambda (consing next)
+    (lambda ()
+      (next (consing init)))))
+
+(define-qi-syntax-parser make-list
+  [(_:id k:expr v:expr) #'(make-list~ 0 k v)])
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Transformers
 
 (define-deforestable #:transformer (map [floe f])
@@ -453,63 +530,21 @@
 (define-qi-syntax-parser indexes-where
   [(_:id proc) #'(indexes-where~ 0 proc)])
 
-;; Producers
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Consumers
 
-(define-deforestable #:producer (range~ [expr low] [const high] [const step])
-  #:fallback
-  (λ ()
-    (range low high step))
-  #:impl
-  (lambda (high step)
-    (lambda (done skip yield)
-      (λ (low)
-        (cond [(< low high)
-               (yield low (+ low step))]
-              [else (done)]))))
-  #:prepare
-  (lambda (consing next)
-      ;;;
-      (define/contract (something l h s)
-        (-> number? number? number? any)
-        (next (consing l)))
-      (lambda ()
-        (something low high step))))
-
-(define-deforestable #:producer list->cstream ;; => list->cstream->cstream-next
+(define-deforestable #:consumer cstream->list
   #:fallback
   identity
   #:impl
-  (lambda ()
-    (lambda (done skip yield)
-      (λ (state)
-        (cond [(null? state) (done)]
-              [else (yield (car state) (cdr state))]))))
-  #:prepare
-  (lambda (consing next)
-      (lambda (lst)
-        (next (consing lst))))
-  #:contracts
-  (list?))
-
-;; We'd like to indicate multiple surface variants for `range` that
-;; expand to a canonical form, and provide a single codegen just for the
-;; canonical form.
-;; Since `define-deforestable` doesn't support indicating multiple cases
-;; yet, we use the ordinary macro machinery to expand surface variants of
-;; `range` to a canonical form that is defined using
-;; `define-deforestable`.
-(define-qi-syntax-parser range
-  [(_ low:expr high:expr step:expr) #'(range~ low high step)]
-  [(_ low:expr high:expr) #'(range~ low high 1)]
-  [(_ high:expr) #'(range~ 0 high 1)]
-  ;; not strictly necessary but this provides a better error
-  ;; message than simply "range: bad syntax" that's warranted
-  ;; to differentiate from racket/list's `range`
-  [_:id (report-syntax-error this-syntax
-          "(range arg ...)"
-          "range expects at least one argument")])
-
-;; Consumers
+  (lambda (next ctx src)
+    (λ (state)
+      (let loop ([state state])
+        ((next (λ () null)
+               (λ (state) (loop state))
+               (λ (value state)
+                 (cons value (loop state))))
+         state)))))
 
 (define-deforestable #:consumer (foldl [floe op] [expr init])
   #:fallback
@@ -616,19 +651,6 @@
          state)))))
 
 (define-qi-alias cons? pair?)
-
-(define-deforestable #:consumer cstream->list
-  #:fallback
-  identity
-  #:impl
-  (lambda (next ctx src)
-    (λ (state)
-      (let loop ([state state])
-        ((next (λ () null)
-               (λ (state) (loop state))
-               (λ (value state)
-                 (cons value (loop state))))
-         state)))))
 
 (define-deforestable #:consumer (assoc~ [expr v] [floe is-equal?])
   #:fallback
