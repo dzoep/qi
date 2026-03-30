@@ -12,8 +12,7 @@
          "macro.rkt"
          racket/list
          racket/contract/base
-         racket/contract/region
-         racket/match)
+         racket/contract/region)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Producers
@@ -193,17 +192,18 @@
 (define-qi-syntax-parser remw
   [(_:id v:expr) #'(remove~ v equal-always?)])
 
-(define-deforestable #:transformer (remove*~ [const v] [floe proc])
+(define-deforestable #:transformer (remove*~ [const v-lst] [floe proc])
   #:fallback
   (λ (vs)
-    (remove v vs proc))
+    (remove* v-lst vs proc))
   #:impl
-  (lambda (v proc next ctx src)
+  (lambda (v-lst proc next ctx src)
     (λ (done skip yield)
       (next done
             skip
             (λ (value state)
-              (if (proc v value)
+              (if (for/or ((v (in-list v-lst)))
+                    (proc v value))
                   (skip state)
                   (yield value state)))))))
 

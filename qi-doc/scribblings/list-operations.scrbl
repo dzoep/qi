@@ -159,9 +159,6 @@ Deforestable version of @racket[filter] from @racketmodname[racket/base].
 
  Deforestable version of @racket[remove*] from @racketmodname[racket/base].
 
- TODO: the implementation removes single element, does not use list of
- elements to remove - fix before release!
-
 }
 
 @defform[
