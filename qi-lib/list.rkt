@@ -455,23 +455,23 @@
 
 ;; Producers
 
-(define-deforestable #:producer (range~ [expr low] [expr high] [expr step])
+(define-deforestable #:producer (range~ [expr low] [const high] [const step])
   #:fallback
   (λ ()
     (range low high step))
   #:impl
-  (lambda (done skip yield)
-    (λ (state)
-      (match-define (list l h s) state)
-      (cond [(< l h)
-             (yield l (cons (+ l s) (cdr state)))]
-            [else (done)])))
+  (lambda (high step)
+    (lambda (done skip yield)
+      (λ (low)
+        (cond [(< low high)
+               (yield low (+ low step))]
+              [else (done)]))))
   #:prepare
   (lambda (consing next)
       ;;;
       (define/contract (something l h s)
         (-> number? number? number? any)
-        (next (consing (list l h s))))
+        (next (consing l)))
       (lambda ()
         (something low high step))))
 
@@ -479,10 +479,11 @@
   #:fallback
   identity
   #:impl
-  (lambda (done skip yield)
-    (λ (state)
-      (cond [(null? state) (done)]
-            [else (yield (car state) (cdr state))])))
+  (lambda ()
+    (lambda (done skip yield)
+      (λ (state)
+        (cond [(null? state) (done)]
+              [else (yield (car state) (cdr state))]))))
   #:prepare
   (lambda (consing next)
       (lambda (lst)
