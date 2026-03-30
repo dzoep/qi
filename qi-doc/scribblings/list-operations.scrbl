@@ -112,32 +112,131 @@ Deforestable version of @racket[filter] from @racketmodname[racket/base].
 
 }
 
-remove
+@defform*[
+ ((remove v)
+  (remove v proc))
+ #:contracts
+ ((v any/c)
+  (proc (-> any/c any/c)))]{
 
-remq
+ Deforestable version of @racket[remove] from @racketmodname[racket/base].
 
-remv
+}
 
-remw
+@defform[
+ (remq v)
+ #:contracts
+ ((v any/c))]{
 
-remove*
+ Deforestable version of @racket[remq] from @racketmodname[racket/base].
 
-remq*
+}
 
-remv*
+@defform[
+ (remv v)
+ #:contracts
+ ((v any/c))]{
 
-remw*
+ Deforestable version of @racket[remv] from @racketmodname[racket/base].
 
-member
+}
 
-memw
+@defform[
+ (remw v)
+ #:contracts
+ ((v any/c))]{
 
-memv
+ Deforestable version of @racket[remw] from @racketmodname[racket/base].
 
-memq
+}
 
-memf
+@defform*[
+ ((remove* v)
+  (remove* v proc))
+ #:contracts
+ ((v any/c)
+  (proc (-> any/c any/c)))]{
 
+ Deforestable version of @racket[remove*] from @racketmodname[racket/base].
+
+ TODO: the implementation removes single element, does not use list of
+ elements to remove - fix before release!
+
+}
+
+@defform[
+ (remq* v)
+ #:contracts
+ ((v any/c))]{
+
+ Deforestable version of @racket[remq*] from @racketmodname[racket/base].
+
+}
+
+@defform[
+ (remv* v)
+ #:contracts
+ ((v any/c))]{
+
+ Deforestable version of @racket[remv*] from @racketmodname[racket/base].
+
+}
+
+@defform[
+ (remw* v)
+ #:contracts
+ ((v any/c))]{
+
+ Deforestable version of @racket[remw*] from @racketmodname[racket/base].
+
+}
+
+@defform*[
+ ((member v)
+  (member v proc))
+ #:contracts
+ ((v any/c)
+  (proc (-> any/c any/c)))]{
+
+ Deforestable version of @racket[member] from @racketmodname[racket/base].
+
+}
+
+@defform[
+ (memq v)
+ #:contracts
+ ((v any/c))]{
+
+ Deforestable version of @racket[memq] from @racketmodname[racket/base].
+
+}
+
+@defform[
+ (memv v)
+ #:contracts
+ ((v any/c))]{
+
+ Deforestable version of @racket[memv] from @racketmodname[racket/base].
+
+}
+
+@defform[
+ (memw v)
+ #:contracts
+ ((v any/c))]{
+
+ Deforestable version of @racket[memw] from @racketmodname[racket/base].
+
+}
+
+@defform[
+ (memf proc)
+ #:contracts
+ ((proc (-> any/c any/c)))]{
+
+ Deforestable version of @racket[memf] from @racketmodname[racket/base].
+
+}
 
 @defidform[cdr]{
 
@@ -165,17 +264,47 @@ Deforestable version of @racket[cddddr] from @racketmodname[racket/base].
 
 @defidform[rest]{
 
-Deforestable version of @racket[rest] from @racketmodname[racket/base].
+Deforestable version of @racket[rest] from @racketmodname[racket/list].
 
 }
 
-list-update
+@defform[(list-update pos updater)
+	 #:contracts
+	 ((pos exact-nonnegative-integer?)
+	  (updater (-> any/c any/c)))]{
 
-list-set
+ Deforestable version of @racket[list-update] from
+ @racketmodname[racket/list].
 
-indexes-of
+}
 
-indexes-where
+@defform[(list-set pos value)
+	 #:contracts
+	 ((pos exact-nonnegative-integer?)
+	  (value any/c))]{
+
+ Deforestable version of @racket[list-set] from
+ @racketmodname[racket/list].
+
+}
+
+@defform*[((indexes-of v is-equal?)
+	   (indexes-of v))
+	  #:contracts
+	  ((v any/c)
+	   (is-equal? (-> any/c any/c)))]{
+
+ Deforestable version of @racket[indexes-of] from @racketmodname[racket/list].
+
+}
+
+@defform[(indexes-where proc)
+	 #:contracts
+	  ((proc (-> any/c any/c)))]{
+
+ Deforestable version of @racket[indexes-where] from @racketmodname[racket/list].
+
+}
 
 @defform[
   (take pos)
@@ -195,7 +324,14 @@ Deforestable version of @racket[takef] from @racketmodname[racket/list].
 
 }
 
-dropf
+@defform[(dropf pred)
+	 #:contracts
+	 ((pred (-> any/c any/c)))]{
+
+ Deforestable version of @racket[dropf] from
+ @racketmodname[racket/list].
+
+}
 
 @defform[
   (filter-map proc)
@@ -215,15 +351,21 @@ Deforestable version of @racket[filter-not] from @racketmodname[racket/list].
 
 }
 
-remf
+@defform[(remf pred)
+	 #:contracts
+	 ((pred (-> any/c any/c)))]{
 
-remf*
+ Deforestable version of @racket[remf] from @racketmodname[racket/list].
 
+}
 
+@defform[(remf* pred)
+	 #:contracts
+	 ((pred (-> any/c any/c)))]{
 
+ Deforestable version of @racket[remf*] from @racketmodname[racket/list].
 
-
-
+}
 
 @section{Consumers}
 
