@@ -1,8 +1,7 @@
 #lang racket/base
 
 (provide (for-space qi
-                    (all-defined-out)
-                    (rename-out [list-tail drop])))
+                    (all-defined-out)))
 
 (require (for-syntax racket/base
                      "private/util.rkt")
@@ -95,6 +94,9 @@
 
 ;; Special values used by stateful transformers
 (define deforest/done (gensym))
+
+(define-qi-syntax-parser cdr
+  [_:id #'(list-tail 1)])
 
 (define-deforestable #:transformer (list-tail [expr n])
   #:fallback
@@ -287,9 +289,6 @@
 (define-qi-syntax-parser memf
   [(_:id proc) #'(memf~ 'unused proc)])
 
-(define-qi-syntax-parser cdr
-  [_:id #'(list-tail 1)])
-
 (define-qi-syntax-parser cddr
   [_:id #'(list-tail 2)])
 
@@ -415,6 +414,8 @@
                      (define new-state (cons (sub1 n) state))
                      (yield value new-state)))
              state))))))
+
+(define-qi-alias drop list-tail)
 
 (define-deforestable #:transformer (takef [floe pred])
   #:fallback
@@ -547,6 +548,75 @@
                  (cons value (loop state))))
          state)))))
 
+(define-deforestable #:consumer pair?
+  #:fallback
+  pair?
+  #:impl
+  (lambda (next ctx src)
+    (λ (state)
+      (let loop ([state state])
+        ((next (λ () #f)
+               (λ (state) (loop state))
+               (λ (value state) #t))
+         state)))))
+
+(define-qi-alias null? empty?)
+
+(define-qi-syntax-parser car
+  [_:id #'(list-ref~ 0 'car)])
+
+(define-deforestable #:consumer length
+  #:fallback
+  length
+  #:impl
+  (lambda (next ctx src)
+    (λ (state)
+      (let loop ([state state]
+                 [the-length 0])
+        ((next (λ () the-length)
+               (λ (state) (loop state the-length))
+               (λ (value state)
+                 (loop state (add1 the-length))))
+         state)))))
+
+(define-deforestable #:consumer (list-ref~ [expr n] [expr name])
+  #:fallback
+  (λ (vs)
+      (list-ref vs n))
+  #:impl
+  (lambda (init-countdown name next ctx src)
+    (λ (state)
+      (let loop ([state state]
+                 [countdown init-countdown])
+        ((next (λ () ((contract (-> pair? any)
+                                (λ (v) v)
+                                name ctx #f
+                                src)
+                      '()))
+               (λ (state) (loop state countdown))
+               (λ (value state)
+                 (if (zero? countdown)
+                     value
+                     (loop state (sub1 countdown)))))
+         state)))))
+
+(define-qi-syntax-parser list-ref
+  [(_ n:expr) #'(list-ref~ n 'list-ref)])
+
+(define-deforestable #:consumer reverse
+  #:fallback
+  (λ (vs)
+    (reverse vs))
+  #:impl
+  (lambda (next ctx src)
+    (lambda (state)
+      (let loop ([acc '()] [state state])
+        ((next (λ () acc)
+               (λ (state) (loop acc state))
+               (λ (value state)
+                 (loop (cons value acc) state)))
+         state)))))
+
 (define-deforestable #:consumer (foldl [floe op] [expr init])
   #:fallback
   (λ (vs)
@@ -575,83 +645,21 @@
                  (op value (loop state))))
          state)))))
 
-(define-deforestable #:consumer (list-ref~ [expr n] [expr name])
+(define-deforestable #:consumer (findf [floe proc])
   #:fallback
   (λ (vs)
-      (list-ref vs n))
+    (findf vs proc))
   #:impl
-  (lambda (init-countdown name next ctx src)
-    (λ (state)
-      (let loop ([state state]
-                 [countdown init-countdown])
-        ((next (λ () ((contract (-> pair? any)
-                                (λ (v) v)
-                                name ctx #f
-                                src)
-                      '()))
-               (λ (state) (loop state countdown))
-               (λ (value state)
-                 (if (zero? countdown)
-                     value
-                     (loop state (sub1 countdown)))))
-         state)))))
-
-(define-qi-syntax-parser list-ref
-  [(_ n:expr) #'(list-ref~ n 'list-ref)])
-
-(define-qi-syntax-parser car
-  [_:id #'(list-ref~ 0 'car)])
-
-(define-qi-syntax-parser cadr
-  [_:id #'(list-ref~ 1 'cadr)])
-
-(define-qi-syntax-parser caddr
-  [_:id #'(list-ref~ 2 'caddr)])
-
-(define-qi-syntax-parser cadddr
-  [_:id #'(list-ref~ 3 'cadddr)])
-
-(define-deforestable #:consumer length
-  #:fallback
-  length
-  #:impl
-  (lambda (next ctx src)
-    (λ (state)
-      (let loop ([state state]
-                 [the-length 0])
-        ((next (λ () the-length)
-               (λ (state) (loop state the-length))
-               (λ (value state)
-                 (loop state (add1 the-length))))
-         state)))))
-
-(define-deforestable #:consumer empty?
-  #:fallback
-  empty?
-  #:impl
-  (lambda (next ctx src)
-    (λ (state)
-      (let loop ([state state])
-        ((next (λ () #t)
-               (λ (state) (loop state))
-               (λ (value state) #f))
-         state)))))
-
-(define-qi-alias null? empty?)
-
-(define-deforestable #:consumer pair?
-  #:fallback
-  pair?
-  #:impl
-  (lambda (next ctx src)
-    (λ (state)
-      (let loop ([state state])
+  (lambda (proc next ctx src)
+    (lambda (state)
+      (let loop ((state state))
         ((next (λ () #f)
                (λ (state) (loop state))
-               (λ (value state) #t))
+               (λ (value state)
+                 (if (proc value)
+                     value
+                     (loop state))))
          state)))))
-
-(define-qi-alias cons? pair?)
 
 (define-deforestable #:consumer (assoc~ [expr v] [floe is-equal?])
   #:fallback
@@ -698,8 +706,28 @@
                      (loop state))))
          state)))))
 
-#;(define-qi-syntax-parser count
-  [(_ proc) #'(~> (filter-map proc) length)])
+(define-qi-syntax-parser cadr
+  [_:id #'(list-ref~ 1 'cadr)])
+
+(define-qi-syntax-parser caddr
+  [_:id #'(list-ref~ 2 'caddr)])
+
+(define-qi-syntax-parser cadddr
+  [_:id #'(list-ref~ 3 'cadddr)])
+
+(define-qi-alias cons? pair?)
+
+(define-deforestable #:consumer empty?
+  #:fallback
+  empty?
+  #:impl
+  (lambda (next ctx src)
+    (λ (state)
+      (let loop ([state state])
+        ((next (λ () #t)
+               (λ (state) (loop state))
+               (λ (value state) #f))
+         state)))))
 
 (define-deforestable #:consumer (index-of~ [expr v] [floe is-equal?])
   #:fallback
@@ -737,22 +765,6 @@
                  (if (proc value)
                      idx
                      (loop state (add1 idx)))))
-         state)))))
-
-(define-deforestable #:consumer (findf [floe proc])
-  #:fallback
-  (λ (vs)
-    (findf vs proc))
-  #:impl
-  (lambda (proc next ctx src)
-    (lambda (state)
-      (let loop ((state state))
-        ((next (λ () #f)
-               (λ (state) (loop state))
-               (λ (value state)
-                 (if (proc value)
-                     value
-                     (loop state))))
          state)))))
 
 (define-deforestable #:consumer (argmin [floe proc])
@@ -795,16 +807,5 @@
                      (loop state bestarg bestval))))
          state)))))
 
-(define-deforestable #:consumer reverse
-  #:fallback
-  (λ (vs)
-    (reverse vs))
-  #:impl
-  (lambda (next ctx src)
-    (lambda (state)
-      (let loop ([acc '()] [state state])
-        ((next (λ () acc)
-               (λ (state) (loop acc state))
-               (λ (value state)
-                 (loop (cons value acc) state)))
-         state)))))
+#;(define-qi-syntax-parser count
+  [(_ proc) #'(~> (filter-map proc) length)])

@@ -80,6 +80,12 @@ By default @racket[start] is @racket[0] and @racket[step] is @racket[1].
 @section{Transformers}
 
 
+@defidform[cdr]{
+
+Deforestable version of @racket[cdr] from @racketmodname[racket/base].
+
+}
+
 @defform*[
   ((list-tail pos)
    (drop pos))
@@ -235,12 +241,6 @@ Deforestable version of @racket[filter] from @racketmodname[racket/base].
 
 }
 
-@defidform[cdr]{
-
-Deforestable version of @racket[cdr] from @racketmodname[racket/base].
-
-}
-
 @defidform[cddr]{
 
 Deforestable version of @racket[cddr] from @racketmodname[racket/base].
@@ -366,6 +366,37 @@ Deforestable version of @racket[filter-not] from @racketmodname[racket/list].
 
 @section{Consumers}
 
+pair?
+
+@defidform[null?]{
+
+Deforestable version of @racket[null?] from @racketmodname[racket/base].
+
+}
+
+@defidform[car]{
+
+Deforestable version of @racket[car] from @racketmodname[racket/base].
+
+}
+
+@defidform[length]{
+
+Deforestable version of @racket[length] from @racketmodname[racket/base].
+
+}
+
+@defform[
+  (list-ref pos)
+  #:contracts
+  ((pos exact-nonnegative-integer?))]{
+
+Deforestable version of @racket[list-ref] from @racketmodname[racket/base].
+
+}
+
+reverse
+
 @defform[
   (foldl proc init)
   #:contracts
@@ -386,11 +417,17 @@ Deforestable version of @racket[foldr] from @racketmodname[racket/base].
 
 }
 
-@defidform[car]{
+findf
 
-Deforestable version of @racket[car] from @racketmodname[racket/base].
+assoc
 
-}
+assw
+
+assv
+
+assq
+
+assf
 
 @defidform[cadr]{
 
@@ -410,20 +447,7 @@ Deforestable version of @racket[cadddr] from @racketmodname[racket/base].
 
 }
 
-@defform[
-  (list-ref pos)
-  #:contracts
-  ((pos exact-nonnegative-integer?))]{
-
-Deforestable version of @racket[list-ref] from @racketmodname[racket/base].
-
-}
-
-@defidform[length]{
-
-Deforestable version of @racket[length] from @racketmodname[racket/base].
-
-}
+cons?
 
 @defidform[empty?]{
 
@@ -431,8 +455,10 @@ Deforestable version of @racket[empty?] from @racketmodname[racket/list].
 
 }
 
-@defidform[null?]{
+index-of
 
-Deforestable version of @racket[null?] from @racketmodname[racket/base].
+index-where
 
-}
+argmin
+
+argmax
