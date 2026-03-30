@@ -67,52 +67,18 @@ By default @racket[start] is @racket[0] and @racket[step] is @racket[1].
 
 }
 
+@defform[
+ (make-list k v)
+ #:contracts
+ ((k exact-nonnegative-integer?)
+  (v any/c))]{
+
+ Deforestable version of @racket[make-list] from @racketmodname[racket/list].
+
+}
+
 @section{Transformers}
 
-@defform[
-  (filter pred)
-  #:contracts
-  ((pred (-> any/c any/c)))]{
-
-Deforestable version of @racket[filter] from @racketmodname[racket/base].
-
-}
-
-@defform[
-  (map proc)
-  #:contracts
-  ((proc (-> any/c any/c)))]{
-
-Deforestable version of @racket[map] from @racketmodname[racket/base]. Note that, unlike the Racket version, this accepts only one argument. For the "zip"-like behavior with multiple list inputs, see @racket[△].
-
-}
-
-@defform[
-  (filter-map proc)
-  #:contracts
-  ((proc (-> any/c any/c)))]{
-
-Deforestable version of @racket[filter-map] from @racketmodname[racket/list].
-
-}
-
-@defform[
-  (take pos)
-  #:contracts
-  ((pos exact-nonnegative-integer?))]{
-
-Deforestable version of @racket[take] from @racketmodname[racket/list].
-
-}
-
-@defform[
-  (filter-not pred)
-  #:contracts
-  ((pred (-> any/c any/c)))]{
-
-Deforestable version of @racket[filter-not] from @racketmodname[racket/list].
-
-}
 
 @defform*[
   ((list-tail pos)
@@ -125,9 +91,24 @@ Deforestable version of @racket[list-tail]/@racket[drop] from
 
 }
 
-@defidform[rest]{
+@defform[
+  (map proc)
+  #:contracts
+  ((proc (-> any/c any/c)))]{
 
-Deforestable version of @racket[rest] from @racketmodname[racket/base].
+Deforestable version of @racket[map] from
+@racketmodname[racket/base]. Note that, unlike the Racket version,
+this accepts only one argument. For the "zip"-like behavior with
+multiple list inputs, see @racket[△].
+
+}
+
+@defform[
+  (filter pred)
+  #:contracts
+  ((pred (-> any/c any/c)))]{
+
+Deforestable version of @racket[filter] from @racketmodname[racket/base].
 
 }
 
@@ -154,6 +135,56 @@ Deforestable version of @racket[cdddr] from @racketmodname[racket/base].
 Deforestable version of @racket[cddddr] from @racketmodname[racket/base].
 
 }
+
+@defidform[rest]{
+
+Deforestable version of @racket[rest] from @racketmodname[racket/base].
+
+}
+
+@defform[
+  (take pos)
+  #:contracts
+  ((pos exact-nonnegative-integer?))]{
+
+Deforestable version of @racket[take] from @racketmodname[racket/list].
+
+}
+
+@defform[
+  (takef pred)
+  #:contracts
+  ((pred (-> any/c any/c)))]{
+
+Deforestable version of @racket[takef] from @racketmodname[racket/list].
+
+}
+
+@defform[
+  (filter-map proc)
+  #:contracts
+  ((proc (-> any/c any/c)))]{
+
+Deforestable version of @racket[filter-map] from @racketmodname[racket/list].
+
+}
+
+@defform[
+  (filter-not pred)
+  #:contracts
+  ((pred (-> any/c any/c)))]{
+
+Deforestable version of @racket[filter-not] from @racketmodname[racket/list].
+
+}
+
+
+
+
+
+
+
+
 
 @section{Consumers}
 

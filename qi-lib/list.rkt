@@ -94,6 +94,37 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Transformers
 
+(define-deforestable #:transformer (list-tail [expr n])
+  #:fallback
+  (lambda (vs)
+      (list-tail vs n))
+  #:impl
+  (lambda (next ctx src)
+    (λ (done skip yield)
+      (λ (drop-state)
+        (define n (car drop-state))
+        (define state (cdr drop-state))
+        (if (zero? n)
+            ((next done
+                   (λ (state)
+                     (skip (cons n state)))
+                   (λ (value state)
+                     (define new-state (cons n state))
+                     (yield value new-state)))
+             state)
+            ((next (λ ()
+                     ((contract (-> pair? any)
+                                (λ (v) v)
+                                'list-tail ctx
+                                #f
+                                src)
+                      '()))
+                   (λ (state)
+                     (skip (cons n state)))
+                   (λ (value state)
+                     (skip (cons (sub1 n) state))))
+             state))))))
+
 (define-deforestable #:transformer (map [floe f])
   #:fallback
   (lambda (vs)  ; single list arg      
@@ -120,20 +151,23 @@
                   (yield value state)
                   (skip state)))))))
 
-(define-deforestable #:transformer (filter-map [floe f])
-  #:fallback
-  (λ (vs)
-      (filter-map f vs))
-  #:impl
-  (lambda (f next ctx src)
-    (λ (done skip yield)
-      (next done
-            skip
-            (λ (value state)
-              (let ([fv (f value)])
-                (if fv
-                    (yield fv state)
-                    (skip state))))))))
+(define-qi-syntax-parser cdr
+  [_:id #'(list-tail 1)])
+
+(define-qi-syntax-parser cddr
+  [_:id #'(list-tail 2)])
+
+(define-qi-syntax-parser cdddr
+  [_:id #'(list-tail 3)])
+
+(define-qi-syntax-parser cddddr
+  [_:id #'(list-tail 4)])
+
+(define-qi-syntax-parser cdddddr
+  [_:id #'(list-tail 5)])
+
+(define-qi-syntax-parser rest
+  [_:id #'(list-tail 1)])
 
 (define-deforestable #:transformer (take [expr n])
   #:fallback
@@ -175,6 +209,21 @@
                   (yield value state)
                   (done)))))))
 
+(define-deforestable #:transformer (filter-map [floe f])
+  #:fallback
+  (λ (vs)
+      (filter-map f vs))
+  #:impl
+  (lambda (f next ctx src)
+    (λ (done skip yield)
+      (next done
+            skip
+            (λ (value state)
+              (let ([fv (f value)])
+                (if fv
+                    (yield fv state)
+                    (skip state))))))))
+
 (define-deforestable #:transformer (filter-not [floe f])
   #:fallback
   (lambda (vs)
@@ -189,54 +238,12 @@
                   (skip state)
                   (yield value state)))))))
 
-(define-deforestable #:transformer (list-tail [expr n])
-  #:fallback
-  (lambda (vs)
-      (list-tail vs n))
-  #:impl
-  (lambda (next ctx src)
-    (λ (done skip yield)
-      (λ (drop-state)
-        (define n (car drop-state))
-        (define state (cdr drop-state))
-        (if (zero? n)
-            ((next done
-                   (λ (state)
-                     (skip (cons n state)))
-                   (λ (value state)
-                     (define new-state (cons n state))
-                     (yield value new-state)))
-             state)
-            ((next (λ ()
-                     ((contract (-> pair? any)
-                                (λ (v) v)
-                                'list-tail ctx
-                                #f
-                                src)
-                      '()))
-                   (λ (state)
-                     (skip (cons n state)))
-                   (λ (value state)
-                     (skip (cons (sub1 n) state))))
-             state))))))
 
-(define-qi-syntax-parser rest
-  [_:id #'(list-tail 1)])
 
-(define-qi-syntax-parser cdr
-  [_:id #'(list-tail 1)])
 
-(define-qi-syntax-parser cddr
-  [_:id #'(list-tail 2)])
 
-(define-qi-syntax-parser cdddr
-  [_:id #'(list-tail 3)])
 
-(define-qi-syntax-parser cddddr
-  [_:id #'(list-tail 4)])
 
-(define-qi-syntax-parser cdddddr
-  [_:id #'(list-tail 5)])
 
 (define deforest/done (gensym))
 
