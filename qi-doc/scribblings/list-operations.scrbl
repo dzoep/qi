@@ -366,7 +366,11 @@ Deforestable version of @racket[filter-not] from @racketmodname[racket/list].
 
 @section{Consumers}
 
-pair?
+@defidform[pair?]{
+
+ Deforestable version of @racket[pair?] from @racketmodname[racket/base].
+
+}
 
 @defidform[null?]{
 
@@ -395,7 +399,10 @@ Deforestable version of @racket[list-ref] from @racketmodname[racket/base].
 
 }
 
-reverse
+@defidform[reverse]{
+
+ Deforestable version of @racket[reverse] from @racketmodname[racket/base].
+}
 
 @defform[
   (foldl proc init)
@@ -417,17 +424,55 @@ Deforestable version of @racket[foldr] from @racketmodname[racket/base].
 
 }
 
-findf
+@defform[(findf proc)
+	 #:contracts
+	 ((proc (-> any/c any/c)))]{
 
-assoc
+ Deforestable version of @racket[findf] from @racketmodname[racket/base].
+				    
+}
 
-assw
+@defform*[((assoc v)
+	   (assoc v is-equal?))
+	  #:contracts
+	  ((v any/c)
+	   (is-equal? (-> any/c any/c)))]{
 
-assv
+ Deforestable version of @racket[assoc] from @racketmodname[racket/base].
+				    
+}
 
-assq
+@defform[(assw v)
+	  #:contracts
+	  ((v any/c))]{
 
-assf
+ Deforestable version of @racket[assw] from @racketmodname[racket/base].
+				    
+}
+
+@defform[(assv v)
+	  #:contracts
+	  ((v any/c))]{
+
+ Deforestable version of @racket[assv] from @racketmodname[racket/base].
+				    
+}
+
+@defform[(assq v)
+	  #:contracts
+	  ((v any/c))]{
+
+ Deforestable version of @racket[assq] from @racketmodname[racket/base].
+				    
+}
+
+@defform[(assf proc)
+	  #:contracts
+	  ((v (-> any/c any/c)))]{
+
+ Deforestable version of @racket[assf] from @racketmodname[racket/base].
+				    
+}
 
 @defidform[cadr]{
 
@@ -447,7 +492,11 @@ Deforestable version of @racket[cadddr] from @racketmodname[racket/base].
 
 }
 
-cons?
+@defidform[cons?]{
+
+ Deforestable version of @racket[cons?] from @racketmodname[racket/list].
+
+}
 
 @defidform[empty?]{
 
@@ -455,10 +504,36 @@ Deforestable version of @racket[empty?] from @racketmodname[racket/list].
 
 }
 
-index-of
+@defform*[((index-of v)
+	   (index-of v is-equal?))
+	  #:contracts
+	  ((v any/c)
+	   (is-equal? (-> any/c any/c)))]{
 
-index-where
+ Deforestable version of @racket[index-of] from @racketmodname[racket/list].
 
-argmin
+}
 
-argmax
+@defform[(index-where proc)
+	 #:contracts
+	 ((proc (-> any/c any/c)))]{
+
+ Deforestable version of @racket[index-where] from @racketmodname[racket/list].
+
+}
+
+@defform[(argmin proc)
+	 #:contracts
+	 ((proc (-> any/c real?)))]{
+
+ Deforestable version of @racket[argmin] from @racketmodname[racket/list].
+
+}
+
+@defform[(argmax proc)
+	 #:contracts
+	 ((proc (-> any/c real?)))]{
+
+ Deforestable version of @racket[argmax] from @racketmodname[racket/list].
+
+}
